@@ -21,7 +21,7 @@ Dependency only for tests: <br>
 ## Getting sources
 Download from github:
 ```bash
-$ git clone https://github.com/LazyMechanic/prime_generator
+$ git clone https://github.com/LazyMechanic/cml
 ```
 
 ## CMake configuration
@@ -50,16 +50,16 @@ $ cmake                                \
 ## CMake options
 ```bash
 # Build library tests. OFF by default
--Dprime_generator_BUILD_TEST=[OFF|ON]
+-Dcml_BUILD_TEST=[OFF|ON]
 
 # Library for big integer is needed for tests
 -Dfbi_DIR=path/to/fbi/library
 
 # Installation directory for CMake files. "lib/cmake/cml" by default
--Dprime_generator_INSTALL_CMAKE_PREFIX=prefix/path
+-Dcml_INSTALL_CMAKE_PREFIX=prefix/path
 
 # Installation directory for CMake files. "include/cml" by default
--Dprime_generator_INSTALL_INCLUDE_PREFIX=prefix/path
+-Dcml_INSTALL_INCLUDE_PREFIX=prefix/path
 ```
 
 Generate specific project, for example `Visual Studio solution` generator:
@@ -106,6 +106,6 @@ Link library to target:
 add_executable(SomeTarget) # Your target
 target_link_libraries(
     SomeTarget 
-    mech::cml              # fbi target
+    mech::cml              # cml target
 ```
 Include directory will automatically be added to *Sometarget*
