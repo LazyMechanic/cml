@@ -1,50 +1,72 @@
-set(SUBPROJ_NAME "cml")
-set(SUBPROJ_NAMESPACE "mech")
+set(SUBPROJ_NAME                          cml)
+set(${SUBPROJ_NAME}_NAMESPACE             mech)
 
-set(${SUBPROJ_NAME}_MAJOR_VERSION 0)
-set(${SUBPROJ_NAME}_MINOR_VERSION 1)
-set(${SUBPROJ_NAME}_PATCH_VERSION 0)
+set(${SUBPROJ_NAME}_CXX_STANDARD          17)
+set(${SUBPROJ_NAME}_CXX_EXTENSIONS        OFF)
+set(${SUBPROJ_NAME}_CXX_STANDARD_REQUIRED YES)
+
+set(${SUBPROJ_NAME}_MAJOR_VERSION         0)
+set(${SUBPROJ_NAME}_MINOR_VERSION         0)
+set(${SUBPROJ_NAME}_PATCH_VERSION         0)
+
+# Insert here your source files
+set(${SUBPROJ_NAME}_HEADERS
+    "cml.hh"
+    "DefaultRandomGenerator.hh"
+    "IsPowerOf2.hh"
+    "IsPrimeGenerator.hh"
+    "IsRandomGenerator.hh"
+    "Math.hh"
+    "MilRabPrimeGenerator.hh"
+    "PrimeGenerator.hh"
+    "RandomGenerator.hh")
+
+# ############################################################### #
+# Options ####################################################### #
+# ############################################################### #
+
+include(OptionHelpers)
+generate_basic_options_headeronly(${SUBPROJ_NAME})
+
+# Insert here your specififc options for build:
+# .............................................
+
+# ############################################################### #
+# Library version ############################################### #
+# ############################################################### #
+
 set(${SUBPROJ_NAME}_VERSION
     ${${SUBPROJ_NAME}_MAJOR_VERSION}.${${SUBPROJ_NAME}_MINOR_VERSION}.${${SUBPROJ_NAME}_PATCH_VERSION})
 
-set(
-    ${SUBPROJ_NAME}_HEADERS
-    "cml.hh"
-    "MilRabPrimeGenerator.hh"
-    "PrimeGenerator.hh"
-    "IsPrimeGenerator.hh"
-    "Math.hh"
-    "DefaultRandomGenerator.hh"
-    "RandomGenerator.hh"
-    "IsRandomGenerator.hh"
-    "IsPowerOf2.hh")
-
-# No source file in header-only library 
-#set(
-#    ${SUBPROJ_NAME}_SOURCES
-#    "")
-#
+# ############################################################### #
+# Set all target sources ######################################## #
+# ############################################################### #
 
 set(
     ${SUBPROJ_NAME}_ALL_SRCS
     ${${SUBPROJ_NAME}_HEADERS})
 
+# ############################################################### #
+# Create target for build ####################################### #
+# ############################################################### #
+
+# Interface library target
 add_library(
     ${SUBPROJ_NAME}
     INTERFACE)
 
-# Enable C++17 on this project
+# Enable C++ standard on this project
 set_target_properties(
-    ${SUBPROJ_NAME} PROPERTIES 
-    INTERFACE_CXX_STANDARD 17
-    INTERFACE_CXX_EXTENSIONS OFF
-    INTERFACE_CXX_STANDARD_REQUIRED YES)
+    ${SUBPROJ_NAME} PROPERTIES
+    INTERFACE_CXX_STANDARD          ${${SUBPROJ_NAME}_CXX_STANDARD}
+    INTERFACE_CXX_EXTENSIONS        ${${SUBPROJ_NAME}_CXX_EXTENSIONS}
+    INTERFACE_CXX_STANDARD_REQUIRED ${${SUBPROJ_NAME}_CXX_STANDARD_REQUIRED})
 
 target_include_directories(
     ${SUBPROJ_NAME}
-    INTERFACE $<BUILD_INTERFACE:${PROJECT_ROOT_DIR}/include>
+    INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
               $<INSTALL_INTERFACE:include>)
-    
+
 # ############################################################### #
 # Installing #################################################### #
 # ############################################################### #
@@ -65,7 +87,7 @@ set(SUBPROJ_TARGETS_FILE "${SUBPROJ_NAME}-targets.cmake")
 install(
     EXPORT      ${SUBPROJ_NAME}-targets
     FILE        ${SUBPROJ_TARGETS_FILE}
-    NAMESPACE   ${SUBPROJ_NAMESPACE}::
+    NAMESPACE   ${${SUBPROJ_NAME}_NAMESPACE}::
     DESTINATION ${${SUBPROJ_NAME}_INSTALL_CMAKE_PREFIX})
 
 # Create config files
