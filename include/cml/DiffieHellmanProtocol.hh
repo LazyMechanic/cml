@@ -57,25 +57,25 @@ DiffieHellmanPublicKey::DiffieHellmanPublicKey(PrimeGeneratorType primeGenerator
 /* ================================================================================= */
 
 template <class RandomGeneratorType = Mt19937RandomGenerator>
-class DiffieHellmanProtocol : public PrivateKeyGenerator<DiffieHellmanPublicKey> {
+class DiffieHellmanProtocol {
 public:
     static_assert(IsRandomGenerator<RandomGeneratorType>::value,
                   "Invalid template argument for mech::crypt::DiffieHellmanProtocol: RandomGeneratorType interface is "
                   "not suitable");
 
-    using Base            = PrivateKeyGenerator<DiffieHellmanPublicKey>;
+    using Result          = std::uint64_t;
+    using PublicKey       = DiffieHellmanPublicKey;
     using RandomGenerator = RandomGeneratorType;
-    using Base::PublicKey;
-    using Base::Result;
 
     DiffieHellmanProtocol();
     explicit DiffieHellmanProtocol(const RandomGenerator& randomGenerator);
 
-    Result generate(PublicKey key) override;
+    Result generate(PublicKey key);
     Result getA() const;
 
 private:
     Result m_a{};
+    PublicKey m_publicKey{};
     RandomGenerator m_randomGenerator{};
 };
 

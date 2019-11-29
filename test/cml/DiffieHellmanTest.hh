@@ -15,8 +15,8 @@ void testDiffieHellman(bool print = false)
     DiffieHellmanProtocol aliceKeyGenerator{};
     DiffieHellmanProtocol bobKeyGenerator{};
 
-    auto aliceKey = aliceKeyGenerator(publicKey);
-    auto bobKey   = bobKeyGenerator(publicKey);
+    auto aliceKey = aliceKeyGenerator.generate(publicKey);
+    auto bobKey   = bobKeyGenerator.generate(publicKey);
 
     auto aliceReceived = modexp(bobKey, aliceKeyGenerator.getA(), publicKey.p);
     auto bobReceived   = modexp(aliceKey, bobKeyGenerator.getA(), publicKey.p);
