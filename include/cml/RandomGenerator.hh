@@ -1,11 +1,13 @@
 #pragma once
 
+#include <future>
+#include <mutex>
+
 namespace mech {
 namespace crypt {
-template <typename ResultType>
-struct RandomGenerator {
+class RandomGenerator {
 public:
-    using Result = ResultType;
+    using Result = std::uint64_t;
 
     virtual ~RandomGenerator() = default;
 

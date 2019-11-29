@@ -14,7 +14,7 @@
 CML - Crypto Math Library
 
 # Dependencies
-Dependency only for tests: <br>
+Lib for simple big integer: <br>
 - [fbi](https://github.com/LazyMechanic/fbi)
 
 # Build & install
@@ -49,11 +49,11 @@ $ cmake                                \
 
 ## CMake options
 ```bash
-# Build library tests. OFF by default
--Dcml_BUILD_TEST=[OFF|ON]
-
-# Library for big integer is needed for tests
+# Library for big integer
 -Dfbi_DIR=path/to/fbi/library
+
+# Build library tests. OFF by default
+-Dcml_BUILD_TESTS=[OFF|ON]
 
 # Installation directory for CMake files. "lib/cmake/cml" by default
 -Dcml_INSTALL_CMAKE_PREFIX=prefix/path

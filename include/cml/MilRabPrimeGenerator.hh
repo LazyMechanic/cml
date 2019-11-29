@@ -1,33 +1,29 @@
 ﻿#pragma once
 
 #include <array>
-#include <bitset>
 #include <cstdint>
-#include <iostream>
 
-#include "DefaultRandomGenerator.hh"
+#include "Algorithms.hh"
 #include "IsRandomGenerator.hh"
-#include "Math.hh"
+#include "Mt19937RandomGenerator.hh"
 #include "PrimeGenerator.hh"
 
 namespace mech {
 namespace crypt {
-template <std::uint32_t primeDimension,
-          typename BigUint,
-          class RandomGeneratorType = DefaultRandomGenerator<primeDimension, BigUint>>
-class MilRabPrimeGenerator : public PrimeGenerator<primeDimension, BigUint> {
+template <std::uint32_t primeDimension, class RandomGeneratorType = Mt19937RandomGenerator>
+class MilRabPrimeGenerator : public PrimeGenerator {
 public:
     static_assert(IsRandomGenerator<RandomGeneratorType>::value,
                   "Invalid template argument for mech::crypt::MilRabPrimeGenerator: RandomGeneratorType interface is "
                   "not suitable");
 
-    using RandomGenerator                          = RandomGeneratorType;
-    using Base                                     = PrimeGenerator<primeDimension, BigUint>;
-    using Result                                   = typename Base::Result;
-    static constexpr std::uint32_t resultDimension = Base::resultDimension;
+    using Base            = PrimeGenerator;
+    using RandomGenerator = RandomGeneratorType;
+    using Base::Result;
+
+    static constexpr std::uint32_t dimension = primeDimension;
 
     MilRabPrimeGenerator();
-
     explicit MilRabPrimeGenerator(const RandomGenerator& randomGenerator);
 
     Result generate() override;
@@ -56,31 +52,27 @@ private:
     RandomGenerator m_randomGenerator{};
 
     static bool isDividedBySmallPrimes(Result number);
-
-    bool millerRabinTest(Result number, std::uint32_t k);
 };
 
-template <std::uint32_t primeDimension, typename BigUint, class RandomGeneratorType>
-MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::MilRabPrimeGenerator() = default;
+template <std::uint32_t primeDimension, class RandomGeneratorType>
+MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::MilRabPrimeGenerator() = default;
 
-template <std::uint32_t primeDimension, typename BigUint, class RandomGeneratorType>
-MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::MilRabPrimeGenerator(
+template <std::uint32_t primeDimension, class RandomGeneratorType>
+MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::MilRabPrimeGenerator(
     const RandomGenerator& randomGenerator) :
     m_randomGenerator(randomGenerator)
 {}
 
-template <std::uint32_t primeDimension, typename BigUint, class RandomGeneratorType>
-typename MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::Result
-    MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::generate()
+template <std::uint32_t primeDimension, class RandomGeneratorType>
+typename MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::Result
+    MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::generate()
 {
-    Result prime = 0;
+    Result prime    = 0;
+    Result maxLimit = 1ull << (dimension + 1) - 1;
 
-    constexpr std::uint32_t testRepeatCount = resultDimension;
-    
+    constexpr std::uint32_t testRepeatCount = dimension;
+
     while (true) {
-        BigUint maxLimit{1};
-        maxLimit = maxLimit << (resultDimension + 1) - 1; 
-
         // clang-format off
         prime = m_randomGenerator(
             2,
@@ -88,7 +80,7 @@ typename MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::Res
         // clang-format on
 
         prime |= 0x1;
-        prime |= BigUint{ 0x1 } << (resultDimension - 1);
+        prime |= Result{ 0x1 } << (dimension - 1);
 
         // If number is not prime then generate next number
         if (isDividedBySmallPrimes(prime))
@@ -100,8 +92,8 @@ typename MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::Res
     return prime;
 }
 
-template <std::uint32_t primeDimension, typename BigUint, class RandomGeneratorType>
-bool MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::isDividedBySmallPrimes(Result number)
+template <std::uint32_t primeDimension, class RandomGeneratorType>
+bool MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::isDividedBySmallPrimes(Result number)
 {
     for (auto&& prime : smallPrimes) {
         if (number % prime == 0)
@@ -110,195 +102,5 @@ bool MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::isDivid
 
     return false;
 }
-
-template <std::uint32_t primeDimension, typename BigUint, class RandomGeneratorType>
-bool MilRabPrimeGenerator<primeDimension, BigUint, RandomGeneratorType>::millerRabinTest(Result number, std::uint32_t k)
-{
-    // If n == 2 or n == 3 - number is prime
-    if (number == 2 || number == 3)
-        return true;
-
-    // If n < 2 or n even
-    if (number < 2 || number % 2 == 0)
-        return false;
-
-    // Imagine n − 1 as (2^b)·m, where m is odd
-    Result m        = number - 1;
-    std::uint32_t b = 0;
-
-    while (m % 2 == 0) {
-        m /= 2;
-        ++b;
-    }
-
-    for (std::uint32_t i = 0; i < k; i++) {
-        // Random integer [2, number − 2]
-
-        Result a = m_randomGenerator(2, number - 2);
-
-        // x = a^m mod number
-        Result x = modpow<Result>(a, m, number);
-
-        // If x == 1 or x == n − 1, then go to next iteration
-        if (x == 1 || x == number - 1)
-            continue;
-
-        for (std::uint32_t r = 1; r < b; r++) {
-            // x = x^2 mod number
-            x = modpow<Result>(x, 2, number);
-
-            // If x == 1, then return "complex number"
-            if (x == 1)
-                return false;
-
-            // If x == n − 1, then go next iteration outside loop
-            if (x == number - 1)
-                break;
-        }
-
-        if (x != number - 1)
-            return false;
-    }
-
-    // Return "probably prime"
-    return true;
-}
-
-// template <typename limitInteger>
-// constexpr std::bitset<digits> MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::fullSetBits()
-//{
-//    return std::bitset<digits>{ std::numeric_limits<limitInteger>::max() };
-//}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::MilRabPrimeGenerator() :
-// MilRabPrimeGenerator(std::random_device{}())
-//{}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::MilRabPrimeGenerator(ResultType seed) :
-// m_randomGenerator(seed)
-//{}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// ResultType MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::operator()()
-//{
-//    return generatePrime();
-//}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// ResultType MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::randomInteger(ResultType min,
-// ResultType max)
-//{
-//    return std::uniform_int_distribution<ResultType>{ min, max }(m_randomGenerator);
-//}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// bool MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::isDividedBySmallPrimes(ResultType number)
-//{
-//    for (auto&& prime : smallPrimes) {
-//        if (number % prime == 0)
-//            return true;
-//    }
-//
-//    return false;
-//}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// BigUint MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::modpow(BigUint base, BigUint exp, BigUint
-// modulus)
-//{
-//    base %= modulus;
-//    BigUint result = 1;
-//    while (exp > 0) {
-//        if ((exp & 1) == 1)
-//            result = (result * base) % modulus;
-//        base = (base * base) % modulus;
-//        exp >>= 1;
-//    }
-//
-//    return result;
-//}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// bool MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::millerRabinTest(ResultType number,
-// std::int32_t k)
-//{
-//    // If n == 2 or n == 3 - number is prime
-//    if (number == 2 || number == 3)
-//        return true;
-//
-//    // If n < 2 or n even
-//    if (number < 2 || number % 2 == 0)
-//        return false;
-//
-//    // Imagine n − 1 as (2^b)·m, where m is odd
-//    ResultType m = number - 1;
-//    ResultType b = 0;
-//
-//    while (m % 2 == 0) {
-//        m /= 2;
-//        ++b;
-//    }
-//
-//    for (std::int32_t i = 0; i < k; i++) {
-//        // Random integer [2, number − 2]
-//        ResultType a = randomInteger(2, number - 2);
-//
-//        // x = a^m mod number
-//        BigUint x = modpow(a, m, number);
-//
-//        // If x == 1 or x == n − 1, then go to next iteration
-//        if (x == 1 || x == number - 1)
-//            continue;
-//
-//        for (std::int32_t r = 1; r < b; r++) {
-//            // x = x^2 mod number
-//            x = modpow(x, 2, number);
-//
-//            // If x == 1, then return "complex number"
-//            if (x == 1)
-//                return false;
-//
-//            // If x == n − 1, then go next iteration outside loop
-//            if (x == number - 1)
-//                break;
-//        }
-//
-//        if (x != number - 1)
-//            return false;
-//    }
-//
-//    // Return "probably prime"
-//    return true;
-//}
-//
-// template <typename BigUint, std::int32_t digits, typename ResultType, class RandomGenerator>
-// std::uint64_t MilRabPrimeGenerator<BigUint, digits, ResultType, RandomGenerator>::generatePrime()
-//{
-//    ResultType prime = 0;
-//
-//    const std::int32_t testRepeatCount = digits;
-//
-//    while (true) {
-//        // clang-format off
-//        prime = randomInteger(
-//            2ull,
-//            fullSetBits<ResultType>().to_ullong());
-//        // clang-format on
-//
-//        prime |= 0x1;
-//        prime |= 0x1ull << (digits - 1);
-//
-//        // If number is not prime then generate next number
-//        if (isDividedBySmallPrimes(prime))
-//            continue;
-//
-//        if (millerRabinTest(prime, testRepeatCount))
-//            break;
-//    }
-//
-//    return prime;
-//}
 } // namespace crypt
 } // namespace mech

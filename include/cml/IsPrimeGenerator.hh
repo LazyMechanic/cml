@@ -1,4 +1,5 @@
 #pragma once
+#include <future>
 #include <type_traits>
 
 namespace mech {
@@ -12,9 +13,8 @@ private:
     using no = std::false_type;
 
     template <typename U>
-    static constexpr auto check(U*) -> yes<typename U::Result,
-                                           decltype(U::resultDimension),
-                                           decltype(static_cast<typename U::Result (U::*)()>(&U::operator()))>;
+    static constexpr auto check(U*)
+        -> yes<typename U::Result, decltype(static_cast<typename U::Result (U::*)()>(&U::operator()))>;
 
     template <typename U>
     static constexpr no check(...);

@@ -12,10 +12,11 @@ private:
     using no = std::false_type;
 
     template <typename U>
-    static constexpr auto check(U*) -> yes<
-        typename U::Result,
-        decltype(static_cast<typename U::Result (U::*)()>(&U::operator())),
-        decltype(static_cast<typename U::Result (U::*)(typename U::Result, typename U::Result)>(&U::operator()))>;
+    static constexpr auto check(U*)
+        -> yes<typename U::Result,
+               decltype(static_cast<typename U::Result (U::*)()>(&U::operator())),
+               decltype(static_cast<typename U::Result (U::*)(typename U::Result, typename U::Result)>(
+                   &U::operator()))>;
 
     template <typename U>
     static constexpr no check(...);

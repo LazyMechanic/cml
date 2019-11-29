@@ -12,14 +12,15 @@ set(${SUBPROJ_NAME}_PATCH_VERSION         0)
 # Insert here your source files
 set(${SUBPROJ_NAME}_HEADERS
     "cml.hh"
-    "DefaultRandomGenerator.hh"
-    "IsPowerOf2.hh"
+    "Mt19937RandomGenerator.hh"
     "IsPrimeGenerator.hh"
     "IsRandomGenerator.hh"
-    "Math.hh"
+    "Algorithms.hh"
     "MilRabPrimeGenerator.hh"
     "PrimeGenerator.hh"
-    "RandomGenerator.hh")
+    "RandomGenerator.hh"
+    "PrivateKeyGenerator.hh"
+    "DiffieHellmanProtocol.hh")
 
 # ############################################################### #
 # Options ####################################################### #
@@ -66,6 +67,12 @@ target_include_directories(
     ${SUBPROJ_NAME}
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
               $<INSTALL_INTERFACE:include>)
+
+find_package(fbi CONFIG REQUIRED)
+
+target_link_libraries(
+    ${SUBPROJ_NAME}
+    INTERFACE mech::fbi)
 
 # ############################################################### #
 # Installing #################################################### #

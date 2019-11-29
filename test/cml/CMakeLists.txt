@@ -7,10 +7,11 @@ set(${SUBPROJ_NAME}_CXX_STANDARD_REQUIRED YES)
 
 # Insert here your source files
 set(${SUBPROJ_NAME}_HEADERS
-    "")
+    "AlgorithmsTest.hh"
+    "DiffieHellmanTest.hh")
 
 set(${SUBPROJ_NAME}_SOURCES
-    "test.cpp")
+    "test.cc")
 
 # ############################################################### #
 # Options ####################################################### #
@@ -57,13 +58,11 @@ target_include_directories(
     PRIVATE   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-find_package(fbi CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 
 target_link_libraries(
     ${SUBPROJ_NAME}
     ${TESTABLE_TARGET}
-    mech::fbi
     GTest::gtest
     GTest::gtest_main)
 
