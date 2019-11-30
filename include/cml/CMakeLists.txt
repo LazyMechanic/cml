@@ -19,8 +19,8 @@ set(${SUBPROJ_NAME}_HEADERS
     "MilRabPrimeGenerator.hh"
     "PrimeGenerator.hh"
     "RandomGenerator.hh"
-    "PrivateKeyGenerator.hh"
-    "DiffieHellmanProtocol.hh")
+    "DiffieHellmanProtocol.hh"
+    "RsaProtocol.hh")
 
 # ############################################################### #
 # Options ####################################################### #

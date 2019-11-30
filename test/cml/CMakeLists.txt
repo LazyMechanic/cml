@@ -8,7 +8,8 @@ set(${SUBPROJ_NAME}_CXX_STANDARD_REQUIRED YES)
 # Insert here your source files
 set(${SUBPROJ_NAME}_HEADERS
     "AlgorithmsTest.hh"
-    "DiffieHellmanTest.hh")
+    "DiffieHellmanTest.hh"
+    "RsaTest.hh")
 
 set(${SUBPROJ_NAME}_SOURCES
     "test.cc")

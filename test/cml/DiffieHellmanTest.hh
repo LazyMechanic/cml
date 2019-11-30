@@ -7,26 +7,29 @@ using namespace mech::crypt;
 
 void testDiffieHellman(bool print = false)
 {
-    using ResultType    = std::uint64_t;
-    using PublicKeyType = DiffieHellmanPublicKey;
+    using PrimeGenerator = MilRabPrimeGenerator<50>;
+    using RandomGenerator = Mt19937RandomGenerator;
+    using SecurityBase = DiffieHellmanSecurityBase<PrimeGenerator>;
 
-    PublicKeyType publicKey = PublicKeyType{ MilRabPrimeGenerator<50>{} };
+    SecurityBase base{};
 
-    DiffieHellmanProtocol aliceKeyGenerator{};
-    DiffieHellmanProtocol bobKeyGenerator{};
+    base.generate();
 
-    auto aliceKey = aliceKeyGenerator.generate(publicKey);
-    auto bobKey   = bobKeyGenerator.generate(publicKey);
+    DiffieHellmanProtocol aliceKeyGenerator{ base };
+    DiffieHellmanProtocol bobKeyGenerator{ base };
 
-    auto aliceReceived = modexp(bobKey, aliceKeyGenerator.getA(), publicKey.p);
-    auto bobReceived   = modexp(aliceKey, bobKeyGenerator.getA(), publicKey.p);
+    auto aliceKey = aliceKeyGenerator.generate().publicKey;
+    auto bobKey   = bobKeyGenerator.generate().publicKey;
+
+    auto aliceReceived = modexp(bobKey.v, aliceKeyGenerator.privateKey.a, base.p);
+    auto bobReceived   = modexp(aliceKey.v, bobKeyGenerator.privateKey.a, base.p);
 
     if (print) {
-        std::cout << "PublicKey.g: " << publicKey.g << std::endl;
-        std::cout << "PublicKey.p: " << publicKey.p << std::endl;
+        std::cout << "SecurityBase.g: " << base.g << std::endl;
+        std::cout << "SecurityBase.p: " << base.p << std::endl;
 
-        std::cout << "Alice key: " << aliceKey << std::endl;
-        std::cout << "Bob key:   " << bobKey << std::endl;
+        std::cout << "Alice key: " << aliceKey.v << std::endl;
+        std::cout << "Bob key:   " << bobKey.v << std::endl;
 
         std::cout << "Alice received: " << aliceReceived << std::endl;
         std::cout << "Bob received:   " << bobReceived << std::endl;
@@ -35,9 +38,9 @@ void testDiffieHellman(bool print = false)
     EXPECT_EQ(aliceReceived, bobReceived);
 }
 
-TEST(DiffieHellmanProtocol, Received)
+TEST(DiffieHellmanProtocol, InWork)
 {
     for (std::size_t i = 0; i < 100; ++i) {
-        testDiffieHellman(true);
+        testDiffieHellman(false);
     }
 }

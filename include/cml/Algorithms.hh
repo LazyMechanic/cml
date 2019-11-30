@@ -1,7 +1,6 @@
 #pragma once
 
 #include <fbi/fbi.hh>
-#include <iostream>
 #include <set>
 
 #include "Mt19937RandomGenerator.hh"
@@ -18,27 +17,29 @@ struct IsPowerOf2 {
     static constexpr bool value  = (number != 0) && ((number & (number - 1)) == 0);
 };
 
-inline std::uint64_t modexp(std::uint64_t base, std::uint64_t exp, std::uint64_t modulus)
+template <typename T>
+fbi::BigInteger modexp(T base, T exp, T modulus)
 {
     if (modulus == 1)
         return 0;
 
-    fbi::BigUnsigned newBase = base % modulus;
-    fbi::BigUnsigned result  = 1;
+    fbi::BigInteger newBase{ base % modulus };
+    fbi::BigInteger result = 1;
 
     while (exp > 0) {
-        if ((exp & 1) == 1)
+        if ((exp % 2) == 1)
             result = (result * newBase) % modulus;
         exp     = exp >> 1;
         newBase = (newBase * newBase) % modulus;
     }
 
-    return result.toUnsignedLongLong();
+    return result;
 }
 
-inline std::uint64_t gcd(std::uint64_t a, std::uint64_t b)
+template <typename T>
+T gcd(T a, T b)
 {
-    std::uint64_t c = a % b;
+    T c = a % b;
     if (c == 0)
         return b;
     return gcd(b, c);
@@ -70,7 +71,7 @@ bool millerRabinTest(std::uint64_t number, std::uint32_t k, RandomGenerator rand
         std::uint64_t a = randomGenerator(2, number - 2);
 
         // x = a^m mod number
-        std::uint64_t x = modexp(a, m, number);
+        std::uint64_t x = modexp(a, m, number).toUnsignedLongLong();
 
         // If x == 1 or x == n - 1, then go to next iteration
         if (x == 1 || x == number - 1)
@@ -78,7 +79,7 @@ bool millerRabinTest(std::uint64_t number, std::uint32_t k, RandomGenerator rand
 
         for (std::uint32_t r = 1; r < b; r++) {
             // x = x^2 mod number
-            x = modexp(x, 2, number);
+            x = modexp(x, 2ull, number).toUnsignedLongLong();
 
             // If x == 1, then return "complex number"
             if (x == 1)
@@ -183,6 +184,32 @@ inline std::uint64_t primitiveRootModulo(std::uint64_t n)
 
     // If no primitive root found
     return 0;
+}
+
+// Euclid extended algorithm
+template <typename T>
+T gcdex(T a, T b, T &x, T &y)
+{
+    if (a == 0) {
+        x = 0;
+        y = 1;
+        return b;
+    }
+    T x1, y1;
+    T d = gcdex(b % a, a, x1, y1);
+    x   = y1 - (b / a) * x1;
+    y   = x1;
+    return d;
+}
+
+// Inverse modulo
+template <typename T>
+T invmod(T a, T m)
+{
+    T x, y;
+    gcdex(a, m, x, y);
+    x = (x % m + m) % m;
+    return x;
 }
 } // namespace crypt
 } // namespace mech

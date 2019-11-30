@@ -1,17 +1,8 @@
 #pragma once
 
-#include <atomic>
-#include <condition_variable>
-#include <future>
-#include <thread>
-#include <tuple>
-#include <vector>
-
 #include "Algorithms.hh"
 #include "IsPrimeGenerator.hh"
 #include "IsRandomGenerator.hh"
-#include "MilRabPrimeGenerator.hh"
-#include "PrivateKeyGenerator.hh"
 
 namespace mech {
 namespace crypt {
@@ -20,85 +11,97 @@ namespace crypt {
 /* ============================ DiffieHellmanPublicKey ============================= */
 /* ================================================================================= */
 
-struct DiffieHellmanPublicKey {
-    using Result = std::uint64_t;
-
-    DiffieHellmanPublicKey();
-
-    template <class PrimeGeneratorType>
-    explicit DiffieHellmanPublicKey(PrimeGeneratorType primeGenerator);
-
-    Result g;
-    Result p;
-    //
-    // private:
-    //    using FutureValueType = std::tuple<Result, Result>;
-    //
-    //    const unsigned m_threadAmount = std::thread::hardware_concurrency() > 0 ? std::thread::hardware_concurrency()
-    //    : 2; std::vector<std::thread> m_threads{ m_threadAmount }; std::vector<std::shared_future<FutureValueType>>
-    //    m_futures{ m_threadAmount };
-};
-
-inline DiffieHellmanPublicKey::DiffieHellmanPublicKey() = default;
-
 template <class PrimeGeneratorType>
-DiffieHellmanPublicKey::DiffieHellmanPublicKey(PrimeGeneratorType primeGenerator)
-{
+struct DiffieHellmanSecurityBase {
     static_assert(IsPrimeGenerator<PrimeGeneratorType>::value,
-                  "Invalid template argument for mech::crypt::DiffieHellmanPublicKey::create(...): PrimeGeneratorType "
+                  "Invalid template argument for mech::crypt::DiffieHellmanSecurityBase: PrimeGeneratorType "
                   "interface is not suitable");
 
+    using PrimeGenerator = PrimeGeneratorType;
+
+    DiffieHellmanSecurityBase();
+    explicit DiffieHellmanSecurityBase(const PrimeGenerator& primeGenerator);
+
+    DiffieHellmanSecurityBase& generate();
+
+    std::uint64_t g{ 0 };
+    std::uint64_t p{ 0 };
+    PrimeGenerator primeGenerator{};
+};
+
+template <class PrimeGeneratorType>
+DiffieHellmanSecurityBase<PrimeGeneratorType>::DiffieHellmanSecurityBase() = default;
+
+template <class PrimeGeneratorType>
+DiffieHellmanSecurityBase<PrimeGeneratorType>::DiffieHellmanSecurityBase(const PrimeGenerator& primeGenerator) :
+    primeGenerator(primeGenerator)
+{}
+
+template <class PrimeGeneratorType>
+DiffieHellmanSecurityBase<PrimeGeneratorType>& DiffieHellmanSecurityBase<PrimeGeneratorType>::generate()
+{
     this->p = primeGenerator();
     this->g = primitiveRootModulo(this->p);
+    return *this;
 }
+
+struct DiffieHellmanPublicKey {
+    std::uint64_t v{ 0 };
+};
+
+struct DiffieHellmanPrivateKey {
+    std::uint64_t a{ 0 };
+};
 
 /* ================================================================================= */
 /* ============================= DiffieHellmanProtocol ============================= */
 /* ================================================================================= */
 
-template <class RandomGeneratorType = Mt19937RandomGenerator>
-class DiffieHellmanProtocol {
-public:
+template <class SecurityBaseType, class RandomGeneratorType = Mt19937RandomGenerator>
+struct DiffieHellmanProtocol {
     static_assert(IsRandomGenerator<RandomGeneratorType>::value,
-                  "Invalid template argument for mech::crypt::DiffieHellmanProtocol: RandomGeneratorType interface is "
-                  "not suitable");
+                  "Invalid template argument for mech::crypt::DiffieHellmanProtocol: "
+                  "RandomGeneratorType interface is not suitable");
 
-    using Result          = std::uint64_t;
     using PublicKey       = DiffieHellmanPublicKey;
+    using PrivateKey      = DiffieHellmanPrivateKey;
+    using SecurityBase    = SecurityBaseType;
     using RandomGenerator = RandomGeneratorType;
 
-    DiffieHellmanProtocol();
-    explicit DiffieHellmanProtocol(const RandomGenerator& randomGenerator);
+    explicit DiffieHellmanProtocol(SecurityBase base);
+    DiffieHellmanProtocol(SecurityBase base, const RandomGenerator& randomGenerator);
 
-    Result generate(PublicKey key);
-    Result getA() const;
+    DiffieHellmanProtocol& generate();
 
-private:
-    Result m_a{};
-    PublicKey m_publicKey{};
-    RandomGenerator m_randomGenerator{};
+    PublicKey publicKey{};
+    PrivateKey privateKey{};
+    SecurityBase securityBase{};
+    RandomGenerator randomGenerator{};
 };
 
-template <class RandomGeneratorType>
-DiffieHellmanProtocol<RandomGeneratorType>::DiffieHellmanProtocol() = default;
-
-template <class RandomGeneratorType>
-DiffieHellmanProtocol<RandomGeneratorType>::DiffieHellmanProtocol(const RandomGenerator& randomGenerator) :
-    m_randomGenerator(randomGenerator)
+template <class SecurityBaseType, class RandomGeneratorType>
+DiffieHellmanProtocol<SecurityBaseType, RandomGeneratorType>::DiffieHellmanProtocol(SecurityBase base) :
+    securityBase(base)
 {}
 
-template <class RandomGeneratorType>
-typename DiffieHellmanProtocol<RandomGeneratorType>::Result
-    DiffieHellmanProtocol<RandomGeneratorType>::generate(PublicKey key)
-{
-    m_a = m_randomGenerator();
-    return modexp(key.g, m_a, key.p);
-}
+template <class SecurityBaseType, class RandomGeneratorType>
+DiffieHellmanProtocol<SecurityBaseType, RandomGeneratorType>::DiffieHellmanProtocol(
+    SecurityBase base,
+    const RandomGenerator& randomGenerator) :
+    securityBase(base),
+    randomGenerator(randomGenerator)
+{}
 
-template <class RandomGeneratorType>
-typename DiffieHellmanProtocol<RandomGeneratorType>::Result DiffieHellmanProtocol<RandomGeneratorType>::getA() const
+template <class SecurityBaseType, class RandomGeneratorType>
+DiffieHellmanProtocol<SecurityBaseType, RandomGeneratorType>& DiffieHellmanProtocol<SecurityBaseType,
+    RandomGeneratorType>::generate()
 {
-    return m_a;
+    if (securityBase.g == 0 || securityBase.p == 0)
+        throw std::logic_error{ "Security base is not generated" };
+
+    privateKey.a = randomGenerator();
+    publicKey.v  = modexp(securityBase.g, privateKey.a, securityBase.p).toUnsignedLongLong();
+    return *this;
 }
 } // namespace crypt
 } // namespace mech
