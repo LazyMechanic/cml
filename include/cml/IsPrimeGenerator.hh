@@ -1,9 +1,10 @@
 #pragma once
-#include <future>
 #include <type_traits>
 
-namespace mech {
-namespace crypt {
+#include "LaunchPolicy.hh"
+
+namespace cml {
+
 template <typename T>
 struct IsPrimeGenerator {
 private:
@@ -14,7 +15,7 @@ private:
 
     template <typename U>
     static constexpr auto check(U*)
-        -> yes<typename U::Result, decltype(static_cast<typename U::Result (U::*)()>(&U::operator()))>;
+        -> yes<typename U::Result, decltype(static_cast<typename U::Result (U::*)(LaunchPolicy)>(&U::operator()))>;
 
     template <typename U>
     static constexpr no check(...);
@@ -24,5 +25,5 @@ private:
 public:
     static constexpr bool value = type::value;
 };
-} // namespace crypt
-} // namespace mech
+
+} // namespace cml

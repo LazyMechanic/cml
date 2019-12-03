@@ -4,24 +4,28 @@
 #include <cstdint>
 
 #include "Algorithms.hh"
+#include "ContainerByBitness.hh"
 #include "IsRandomGenerator.hh"
-#include "Mt19937RandomGenerator.hh"
 #include "PrimeGenerator.hh"
 
-namespace mech {
-namespace crypt {
-template <std::uint32_t primeDimension, class RandomGeneratorType = Mt19937RandomGenerator>
-class MilRabPrimeGenerator : public PrimeGenerator {
+namespace cml {
+
+template <std::uint32_t primeBitness,
+          class RandomGeneratorType,
+          typename ResultType = typename ContainerByBitness<primeBitness>::Type>
+class MilRabPrimeGenerator : public PrimeGenerator<ResultType> {
 public:
     static_assert(IsRandomGenerator<RandomGeneratorType>::value,
-                  "Invalid template argument for mech::crypt::MilRabPrimeGenerator: RandomGeneratorType interface is "
+                  "Invalid template argument for cml:MilRabPrimeGenerator: RandomGeneratorType interface is "
                   "not suitable");
 
-    using Base            = PrimeGenerator;
-    using RandomGenerator = RandomGeneratorType;
-    using Base::Result;
+        static constexpr std::uint32_t bitness = primeBitness;
 
-    static constexpr std::uint32_t dimension = primeDimension;
+    static_assert(bitness >= 16, "cml::MilRabPrimeGenerator: primeBitness must be great or equal 16");
+
+    using Base            = PrimeGenerator<ResultType>;
+    using RandomGenerator = RandomGeneratorType;
+    using typename Base::Result;
 
     MilRabPrimeGenerator();
     explicit MilRabPrimeGenerator(const RandomGenerator& randomGenerator);
@@ -54,46 +58,46 @@ private:
     static bool isDividedBySmallPrimes(Result number);
 };
 
-template <std::uint32_t primeDimension, class RandomGeneratorType>
-MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::MilRabPrimeGenerator() = default;
+template <std::uint32_t primeBitness, class RandomGeneratorType, typename ResultType>
+MilRabPrimeGenerator<primeBitness, RandomGeneratorType, ResultType>::MilRabPrimeGenerator() = default;
 
-template <std::uint32_t primeDimension, class RandomGeneratorType>
-MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::MilRabPrimeGenerator(
+template <std::uint32_t primeBitness, class RandomGeneratorType, typename ResultType>
+MilRabPrimeGenerator<primeBitness, RandomGeneratorType, ResultType>::MilRabPrimeGenerator(
     const RandomGenerator& randomGenerator) :
     m_randomGenerator(randomGenerator)
 {}
 
-template <std::uint32_t primeDimension, class RandomGeneratorType>
-typename MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::Result
-    MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::generate()
+template <std::uint32_t primeBitness, class RandomGeneratorType, typename ResultType>
+typename MilRabPrimeGenerator<primeBitness, RandomGeneratorType, ResultType>::Result
+    MilRabPrimeGenerator<primeBitness, RandomGeneratorType, ResultType>::generate()
 {
     Result prime    = 0;
-    Result maxLimit = 1ull << (dimension + 1) - 1;
+    Result maxLimit = static_cast<Result>((typename ContainerByBitness<bitness + 1>::Type{ 1 } << bitness) - 1);
 
-    constexpr std::uint32_t testRepeatCount = dimension;
+    constexpr std::uint32_t testRepeatCount = bitness;
 
     while (true) {
         // clang-format off
-        prime = m_randomGenerator(
+        prime = static_cast<Result>(m_randomGenerator(
             2,
-            maxLimit);
+            maxLimit));
         // clang-format on
 
         prime |= 0x1;
-        prime |= Result{ 0x1 } << (dimension - 1);
+        prime |= Result{ 0x1 } << (bitness - 1);
 
         // If number is not prime then generate next number
         if (isDividedBySmallPrimes(prime))
             continue;
 
-        if (millerRabinTest(prime, testRepeatCount))
+        if (millerRabinTest<Result, RandomGenerator>(prime, testRepeatCount, m_randomGenerator))
             break;
     }
     return prime;
 }
 
-template <std::uint32_t primeDimension, class RandomGeneratorType>
-bool MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::isDividedBySmallPrimes(Result number)
+template <std::uint32_t primeBitness, class RandomGeneratorType, typename ResultType>
+bool MilRabPrimeGenerator<primeBitness, RandomGeneratorType, ResultType>::isDividedBySmallPrimes(Result number)
 {
     for (auto&& prime : smallPrimes) {
         if (number % prime == 0)
@@ -102,5 +106,5 @@ bool MilRabPrimeGenerator<primeDimension, RandomGeneratorType>::isDividedBySmall
 
     return false;
 }
-} // namespace crypt
-} // namespace mech
+
+} // namespace cml

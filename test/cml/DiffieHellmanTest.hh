@@ -3,23 +3,30 @@
 #include <cml/cml.hh>
 #include <gtest/gtest.h>
 
-using namespace mech::crypt;
+using namespace cml;
 
+template <std::uint32_t bitness>
 void testDiffieHellman(bool print = false)
 {
-    using PrimeGenerator = MilRabPrimeGenerator<50>;
-    using RandomGenerator = Mt19937RandomGenerator;
-    using SecurityBase = DiffieHellmanSecurityBase<PrimeGenerator>;
+    using Value           = typename ContainerByBitness<bitness>::Type;
+    using RandomGenerator = Mt19937RandomGenerator<bitness, Value>;
+    using PrimeGenerator  = MilRabPrimeGenerator<bitness, RandomGenerator, Value>;
+    using SecurityBase    = DiffieHellmanSecurityBase<Value>;
+    using Protocol        = DiffieHellmanProtocol<Value, RandomGenerator>;
 
-    SecurityBase base{};
+    PrimeGenerator primeGenerator{};
+    RandomGenerator randomGenerator{};
 
-    base.generate();
+    SecurityBase base = SecurityBase::create(primeGenerator, randomGenerator);
 
-    DiffieHellmanProtocol aliceKeyGenerator{ base };
-    DiffieHellmanProtocol bobKeyGenerator{ base };
+    Protocol aliceKeyGenerator{};
+    Protocol bobKeyGenerator{};
 
-    auto aliceKey = aliceKeyGenerator.generate().publicKey;
-    auto bobKey   = bobKeyGenerator.generate().publicKey;
+    aliceKeyGenerator.generate(base);
+    bobKeyGenerator.generate(base);
+
+    auto aliceKey = aliceKeyGenerator.publicKey;
+    auto bobKey   = bobKeyGenerator.publicKey;
 
     auto aliceReceived = modexp(bobKey.v, aliceKeyGenerator.privateKey.a, base.p);
     auto bobReceived   = modexp(aliceKey.v, bobKeyGenerator.privateKey.a, base.p);
@@ -38,9 +45,56 @@ void testDiffieHellman(bool print = false)
     EXPECT_EQ(aliceReceived, bobReceived);
 }
 
-TEST(DiffieHellmanProtocol, InWork)
+TEST(DiffieHellmanProtocol, InWork_16_x100)
 {
+    constexpr std::uint32_t bitness = 16;
+
     for (std::size_t i = 0; i < 100; ++i) {
-        testDiffieHellman(false);
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_32_x100)
+{
+    constexpr std::uint32_t bitness = 32;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_40_x100)
+{
+    constexpr std::uint32_t bitness = 40;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_50_x100)
+{
+    constexpr std::uint32_t bitness = 50;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_60_x100)
+{
+    constexpr std::uint32_t bitness = 60;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_64_x100)
+{
+    constexpr std::uint32_t bitness = 64;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testDiffieHellman<bitness>(false);
     }
 }

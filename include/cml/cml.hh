@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Algorithms.hh"
+#include "ContainerByBitness.hh"
 #include "DiffieHellmanProtocol.hh"
 #include "IsPrimeGenerator.hh"
 #include "IsRandomGenerator.hh"
@@ -9,3 +10,4 @@
 #include "PrimeGenerator.hh"
 #include "RandomGenerator.hh"
 #include "RsaProtocol.hh"
+#include "Srp6Protocol.hh"

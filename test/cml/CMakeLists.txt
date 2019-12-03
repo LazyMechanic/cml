@@ -9,7 +9,8 @@ set(${SUBPROJ_NAME}_CXX_STANDARD_REQUIRED YES)
 set(${SUBPROJ_NAME}_HEADERS
     "AlgorithmsTest.hh"
     "DiffieHellmanTest.hh"
-    "RsaTest.hh")
+    "RsaTest.hh"
+    "Srp6Test.hh")
 
 set(${SUBPROJ_NAME}_SOURCES
     "test.cc")
@@ -20,6 +21,8 @@ set(${SUBPROJ_NAME}_SOURCES
 
 # Insert here your specififc options for build:
 # .............................................
+
+option(Boost_SHARED_LIBS "Use boost as shared library." OFF)
 
 # ############################################################### #
 # Set all target sources ######################################## #
@@ -58,12 +61,19 @@ target_include_directories(
     ${SUBPROJ_NAME}
     PRIVATE   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+    
+
+if (${Boost_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS 1)
+endif()
 
 find_package(GTest CONFIG REQUIRED)
+find_package(Boost CONFIG COMPONENTS random REQUIRED)
 
 target_link_libraries(
     ${SUBPROJ_NAME}
     ${TESTABLE_TARGET}
+    Boost::random
     GTest::gtest
     GTest::gtest_main)
 

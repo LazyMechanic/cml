@@ -49,6 +49,8 @@ FixNamespaceComments: 'true'
 IncludeBlocks: Regroup
 IncludeCategories:
       - Regex:           '^"'
+        Priority:        51
+      - Regex:           '^<boost/'
         Priority:        50
       - Regex:           '^<[^/]*>$'
         Priority:        1

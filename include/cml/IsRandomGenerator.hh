@@ -1,8 +1,8 @@
 #pragma once
 #include <type_traits>
 
-namespace mech {
-namespace crypt {
+namespace cml {
+
 template <typename T>
 struct IsRandomGenerator {
 private:
@@ -14,8 +14,8 @@ private:
     template <typename U>
     static constexpr auto check(U*)
         -> yes<typename U::Result,
-               decltype(static_cast<typename U::Result (U::*)()>(&U::operator())),
-               decltype(static_cast<typename U::Result (U::*)(typename U::Result, typename U::Result)>(
+               decltype(static_cast<typename U::Result (U::*)(LaunchPolicy)>(&U::operator())),
+               decltype(static_cast<typename U::Result (U::*)(typename U::Result, typename U::Result, LaunchPolicy)>(
                    &U::operator()))>;
 
     template <typename U>
@@ -26,5 +26,5 @@ private:
 public:
     static constexpr bool value = type::value;
 };
-} // namespace crypt
-} // namespace mech
+
+} // namespace cml

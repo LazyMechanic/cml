@@ -12,15 +12,18 @@ set(${SUBPROJ_NAME}_PATCH_VERSION         0)
 # Insert here your source files
 set(${SUBPROJ_NAME}_HEADERS
     "cml.hh"
-    "Mt19937RandomGenerator.hh"
-    "IsPrimeGenerator.hh"
-    "IsRandomGenerator.hh"
+    "LaunchPolicy.hh"
     "Algorithms.hh"
-    "MilRabPrimeGenerator.hh"
+    "ContainerByBitness.hh"
     "PrimeGenerator.hh"
     "RandomGenerator.hh"
+    "IsPrimeGenerator.hh"
+    "IsRandomGenerator.hh"
+    "MilRabPrimeGenerator.hh"
+    "Mt19937RandomGenerator.hh"
     "DiffieHellmanProtocol.hh"
-    "RsaProtocol.hh")
+    "RsaProtocol.hh"
+    "Srp6Protocol.hh")
 
 # ############################################################### #
 # Options ####################################################### #
@@ -68,11 +71,11 @@ target_include_directories(
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
               $<INSTALL_INTERFACE:include>)
 
-find_package(fbi CONFIG REQUIRED)
+find_package(Boost CONFIG COMPONENTS random REQUIRED)
 
 target_link_libraries(
     ${SUBPROJ_NAME}
-    INTERFACE mech::fbi)
+    INTERFACE Boost::random)
 
 # ############################################################### #
 # Installing #################################################### #

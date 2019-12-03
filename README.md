@@ -14,8 +14,9 @@
 CML - Crypto Math Library
 
 # Dependencies
-Lib for simple big integer: <br>
-- [fbi](https://github.com/LazyMechanic/fbi)
+- [Boost](https://www.boost.org/)
+  - Boost.Multiprecision
+  - Boost.Random
 
 # Build & install
 ## Getting sources
@@ -49,8 +50,8 @@ $ cmake                                \
 
 ## CMake options
 ```bash
-# Library for big integer
--Dfbi_DIR=path/to/fbi/library
+# Boost
+-DBoost_DIR=path/to/boost/library
 
 # Build library tests. OFF by default
 -Dcml_BUILD_TESTS=[OFF|ON]

@@ -1,26 +1,26 @@
 #pragma once
 
-#include <fbi/fbi.hh>
+#include <boost/multiprecision/cpp_int.hpp>
 
 #include "Algorithms.hh"
 #include "IsPrimeGenerator.hh"
 
-namespace mech {
-namespace crypt {
+namespace cml {
+
 struct RsaPublicKey {
-    fbi::BigInteger e{ 0 };
-    fbi::BigInteger n{ 0 };
+    boost::multiprecision::cpp_int e{ 0 };
+    boost::multiprecision::cpp_int n{ 0 };
 };
 
 struct RsaPrivateKey {
-    fbi::BigInteger d{ 0 };
-    fbi::BigInteger n{ 0 };
+    boost::multiprecision::cpp_int d{ 0 };
+    boost::multiprecision::cpp_int n{ 0 };
 };
 
-template <typename PrimeGeneratorType = MilRabPrimeGenerator<50>>
+template <typename PrimeGeneratorType>
 struct RsaProtocol {
     static_assert(IsPrimeGenerator<PrimeGeneratorType>::value,
-                  "Invalid template argument for mech::crypt::RsaProtocol: PrimeGeneratorType "
+                  "Invalid template argument for cml::RsaProtocol: PrimeGeneratorType "
                   "interface is not suitable");
 
     using PublicKey      = RsaPublicKey;
@@ -30,13 +30,14 @@ struct RsaProtocol {
     RsaProtocol();
     explicit RsaProtocol(const PrimeGenerator& primeGenerator);
 
-    RsaProtocol& generate();
+    void generate();
 
-    fbi::BigInteger encrypt(const std::uint64_t& source, const PublicKey& anotherPublicKey);
-    std::vector<fbi::BigInteger> encrypt(const std::vector<std::uint64_t>& source, const PublicKey& anotherPublicKey);
+    boost::multiprecision::cpp_int encrypt(const std::uint64_t& source, const PublicKey& anotherPublicKey);
+    std::vector<boost::multiprecision::cpp_int> encrypt(const std::vector<std::uint64_t>& source,
+                                                        const PublicKey& anotherPublicKey);
 
-    std::uint64_t decrypt(const fbi::BigInteger& source);
-    std::vector<std::uint64_t> decrypt(const std::vector<fbi::BigInteger>& source);
+    std::uint64_t decrypt(const boost::multiprecision::cpp_int& source);
+    std::vector<std::uint64_t> decrypt(const std::vector<boost::multiprecision::cpp_int>& source);
 
     PublicKey publicKey{};
     PrivateKey privateKey{};
@@ -51,40 +52,40 @@ RsaProtocol<PrimeGeneratorType>::RsaProtocol(const PrimeGenerator& primeGenerato
 {}
 
 template <typename PrimeGeneratorType>
-RsaProtocol<PrimeGeneratorType>& RsaProtocol<PrimeGeneratorType>::generate()
+void RsaProtocol<PrimeGeneratorType>::generate()
 {
-    fbi::BigInteger p{ primeGenerator() };
-    fbi::BigInteger q{ primeGenerator() };
+    boost::multiprecision::cpp_int p{ primeGenerator() };
+    boost::multiprecision::cpp_int q{ primeGenerator() };
 
     // Compute phi
-    fbi::BigInteger phi = (p - 1) * (q - 1);
+    boost::multiprecision::cpp_int phi = (p - 1) * (q - 1);
 
     // Compute 'n'
-    fbi::BigInteger n = p * q;
-    publicKey.n       = n;
-    privateKey.n      = n;
+    boost::multiprecision::cpp_int n = p * q;
+    publicKey.n                      = n;
+    privateKey.n                     = n;
 
     // Mersenne prime number
     publicKey.e = 65537;
 
     // Compute 'd'
     privateKey.d = invmod(publicKey.e, phi);
-
-    return *this;
 }
 
 template <typename PrimeGeneratorType>
-fbi::BigInteger RsaProtocol<PrimeGeneratorType>::encrypt(const std::uint64_t& source, const PublicKey& anotherPublicKey)
+boost::multiprecision::cpp_int RsaProtocol<PrimeGeneratorType>::encrypt(const std::uint64_t& source,
+                                                                        const PublicKey& anotherPublicKey)
 {
-    return modexp<fbi::BigUnsigned>(
-        fbi::BigUnsigned{ source }, anotherPublicKey.e.getMagnitude(), anotherPublicKey.n.getMagnitude());
+    return modexp<boost::multiprecision::cpp_int>(
+        boost::multiprecision::cpp_int{ source }, anotherPublicKey.e, anotherPublicKey.n);
 }
 
 template <typename PrimeGeneratorType>
-std::vector<fbi::BigInteger> RsaProtocol<PrimeGeneratorType>::encrypt(const std::vector<std::uint64_t>& source,
-                                                                      const PublicKey& anotherPublicKey)
+std::vector<boost::multiprecision::cpp_int>
+    RsaProtocol<PrimeGeneratorType>::encrypt(const std::vector<std::uint64_t>& source,
+                                             const PublicKey& anotherPublicKey)
 {
-    std::vector<fbi::BigInteger> result{};
+    std::vector<boost::multiprecision::cpp_int> result{};
     result.resize(source.size());
 
     for (std::size_t i = 0; i < source.size(); ++i) {
@@ -95,14 +96,14 @@ std::vector<fbi::BigInteger> RsaProtocol<PrimeGeneratorType>::encrypt(const std:
 }
 
 template <typename PrimeGeneratorType>
-std::uint64_t RsaProtocol<PrimeGeneratorType>::decrypt(const fbi::BigInteger& source)
+std::uint64_t RsaProtocol<PrimeGeneratorType>::decrypt(const boost::multiprecision::cpp_int& source)
 {
-    return modexp<fbi::BigUnsigned>(source.getMagnitude(), privateKey.d.getMagnitude(), privateKey.n.getMagnitude())
-        .toUnsignedLongLong();
+    return static_cast<std::uint64_t>(modexp<boost::multiprecision::cpp_int>(source, privateKey.d, privateKey.n));
 }
 
 template <typename PrimeGeneratorType>
-std::vector<std::uint64_t> RsaProtocol<PrimeGeneratorType>::decrypt(const std::vector<fbi::BigInteger>& source)
+std::vector<std::uint64_t>
+    RsaProtocol<PrimeGeneratorType>::decrypt(const std::vector<boost::multiprecision::cpp_int>& source)
 {
     std::vector<std::uint64_t> result{};
     result.resize(source.size());
@@ -113,5 +114,5 @@ std::vector<std::uint64_t> RsaProtocol<PrimeGeneratorType>::decrypt(const std::v
 
     return result;
 }
-} // namespace crypt
-} // namespace mech
+
+} // namespace cml

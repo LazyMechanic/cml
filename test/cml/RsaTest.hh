@@ -5,7 +5,7 @@
 #include <cml/cml.hh>
 #include <gtest/gtest.h>
 
-using namespace mech::crypt;
+using namespace cml;
 
 template <typename T>
 std::string vectorToString(const std::vector<T>& message)
@@ -22,13 +22,17 @@ std::string vectorToString(const std::vector<T>& message)
     return ss.str();
 }
 
+template <std::uint32_t bitness>
 void testRsa(bool print = false)
 {
-    using RandomGenerator = Mt19937RandomGenerator;
-    using PrimeGenerator  = MilRabPrimeGenerator<50>;
 
-    RsaProtocol aliceRsaGenerator{};
-    RsaProtocol bobRsaGenerator{};
+    using Value           = typename ContainerByBitness<bitness>::Type;
+    using RandomGenerator = Mt19937RandomGenerator<bitness, Value>;
+    using PrimeGenerator  = MilRabPrimeGenerator<bitness, RandomGenerator, Value>;
+    using Protocol        = RsaProtocol<PrimeGenerator>;
+
+    Protocol aliceRsaGenerator{};
+    Protocol bobRsaGenerator{};
 
     aliceRsaGenerator.generate();
     bobRsaGenerator.generate();
@@ -59,9 +63,65 @@ void testRsa(bool print = false)
     EXPECT_EQ(bobMessage, aliceReceivedMessage);
 }
 
-TEST(RsaProtocol, InWork)
+TEST(RsaProtocol, InWork_16_x100)
 {
+    constexpr std::uint32_t bitness = 16;
+
     for (std::size_t i = 0; i < 100; ++i) {
-        testRsa(false);
+        testRsa<bitness>(false);
+    }
+}
+
+TEST(RsaProtocol, InWork_32_x100)
+{
+    constexpr std::uint32_t bitness = 32;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testRsa<bitness>(false);
+    }
+} 
+
+TEST(RsaProtocol, InWork_64_x100)
+{
+    constexpr std::uint32_t bitness = 64;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testRsa<bitness>(false);
+    }
+}
+
+TEST(RsaProtocol, InWork_128_x100)
+{
+    constexpr std::uint32_t bitness = 128;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testRsa<bitness>(false);
+    }
+}
+
+TEST(RsaProtocol, InWork_256_x100)
+{
+    constexpr std::uint32_t bitness = 256;
+
+    for (std::size_t i = 0; i < 100; ++i) {
+        testRsa<bitness>(false);
+    }
+}
+
+TEST(RsaProtocol, InWork_512_x10)
+{
+    constexpr std::uint32_t bitness = 512;
+
+    for (std::size_t i = 0; i < 10; ++i) {
+        testRsa<bitness>(false);
+    }
+}
+
+TEST(RsaProtocol, InWork_1024_x5)
+{
+    constexpr std::uint32_t bitness = 1024;
+
+    for (std::size_t i = 0; i < 5; ++i) {
+        testRsa<bitness>(false);
     }
 }

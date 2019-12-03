@@ -1,16 +1,17 @@
 #pragma once
 
-#include <fbi/fbi.hh>
 #include <set>
+
+#include <boost/multiprecision/cpp_int.hpp>
 
 #include "Mt19937RandomGenerator.hh"
 
-namespace mech {
-namespace crypt {
+namespace cml {
+
 template <typename T, T _number>
 struct IsPowerOf2 {
     static_assert(std::is_arithmetic<T>::value,
-                  "Invalid template argument for mech::crypt::isPowerOf2: T is not a arithmetic type");
+                  "Invalid template argument for cml::isPowerOf2: T is not a arithmetic type");
 
     using type                   = T;
     static constexpr type number = _number;
@@ -18,13 +19,15 @@ struct IsPowerOf2 {
 };
 
 template <typename T>
-fbi::BigInteger modexp(T base, T exp, T modulus)
+T modexp(T base, T exp, T modulus)
 {
+    using namespace boost::multiprecision;
+
     if (modulus == 1)
         return 0;
 
-    fbi::BigInteger newBase{ base % modulus };
-    fbi::BigInteger result = 1;
+    cpp_int newBase{ base % modulus };
+    cpp_int result = 1;
 
     while (exp > 0) {
         if ((exp % 2) == 1)
@@ -33,7 +36,7 @@ fbi::BigInteger modexp(T base, T exp, T modulus)
         newBase = (newBase * newBase) % modulus;
     }
 
-    return result;
+    return static_cast<T>(result);
 }
 
 template <typename T>
@@ -45,8 +48,8 @@ T gcd(T a, T b)
     return gcd(b, c);
 }
 
-template <class RandomGenerator = Mt19937RandomGenerator>
-bool millerRabinTest(std::uint64_t number, std::uint32_t k, RandomGenerator randomGenerator = RandomGenerator{})
+template <typename T, class RandomGenerator>
+bool millerRabinTest(T number, std::uint32_t k, RandomGenerator &randomGenerator)
 {
     // If n == 2 or n == 3 - number is prime
     if (number == 2 || number == 3)
@@ -57,7 +60,7 @@ bool millerRabinTest(std::uint64_t number, std::uint32_t k, RandomGenerator rand
         return false;
 
     // Imagine n - 1 as (2^b)*m, where m is odd
-    std::uint64_t m = number - 1;
+    T m             = number - 1;
     std::uint32_t b = 0;
 
     while (m % 2 == 0) {
@@ -68,10 +71,10 @@ bool millerRabinTest(std::uint64_t number, std::uint32_t k, RandomGenerator rand
     for (std::uint32_t i = 0; i < k; i++) {
         // Random integer [2, number - 2]
 
-        std::uint64_t a = randomGenerator(2, number - 2);
+        T a = static_cast<T>(randomGenerator(2, number - 2));
 
         // x = a^m mod number
-        std::uint64_t x = modexp(a, m, number).toUnsignedLongLong();
+        T x = modexp<T>(a, m, number);
 
         // If x == 1 or x == n - 1, then go to next iteration
         if (x == 1 || x == number - 1)
@@ -79,7 +82,7 @@ bool millerRabinTest(std::uint64_t number, std::uint32_t k, RandomGenerator rand
 
         for (std::uint32_t r = 1; r < b; r++) {
             // x = x^2 mod number
-            x = modexp(x, 2ull, number).toUnsignedLongLong();
+            x = modexp<T>(x, 2ull, number);
 
             // If x == 1, then return "complex number"
             if (x == 1)
@@ -99,10 +102,11 @@ bool millerRabinTest(std::uint64_t number, std::uint32_t k, RandomGenerator rand
 }
 
 // Utility function to store prime factors of a number
-inline std::set<std::uint64_t> primitiveFactors(std::uint64_t number)
+template <typename T>
+std::set<T> primitiveFactors(T number)
 {
-    std::set<std::uint64_t> s;
-    std::uint64_t n = number - 1;
+    std::set<T> s;
+    T n = number - 1;
 
     if (n % 2 == 0ull) {
         s.insert(2);
@@ -112,11 +116,7 @@ inline std::set<std::uint64_t> primitiveFactors(std::uint64_t number)
         }
     }
 
-    //// Sqrt of UINT_MAX
-    // if (n > 4294967296)
-    //    throw std::overflow_error{ "mech::crypt::primitiveFactors(...): argument is too big" };
-
-    for (std::uint64_t i = 3; i * i <= n; i = i + 2) {
+    for (T i = 3; i * i <= n; i = i + 2) {
         if (n % i == 0ull) {
             s.insert(i);
             // While i divides n, divide n
@@ -137,12 +137,14 @@ inline std::set<std::uint64_t> primitiveFactors(std::uint64_t number)
 /**
  * \brief Function to find smallest primitive root of n
  * \tparam T Return type
+ * \param randomGenerator
  * \param p Modulus
  * \return Primitive root if has, 0 if \a p is primitive or if no roots
  */
-inline std::uint64_t primitiveRootModulo(std::uint64_t n)
+template <typename T, class RandomGenerator>
+T primitiveRootModulo(T n, RandomGenerator &randomGenerator)
 {
-    std::uint64_t testable    = n;
+    T testable                = n;
     std::uint32_t repeatCount = 0;
 
     while (testable != 0) {
@@ -151,10 +153,11 @@ inline std::uint64_t primitiveRootModulo(std::uint64_t n)
     }
 
     // Check if n is prime or not
-    if (!millerRabinTest(n, repeatCount))
+
+    if (!millerRabinTest<T, RandomGenerator>(n, repeatCount, randomGenerator))
         return 0;
 
-    std::uint64_t one = 1;
+    T one = 1;
 
     if (n == 2)
         return 1;
@@ -163,17 +166,17 @@ inline std::uint64_t primitiveRootModulo(std::uint64_t n)
     // Since n is a prime number, the value of Euler
     // Totient function is n-1 as there are n-1
     // relatively prime numbers.
-    std::uint64_t phi = n - 1;
+    T phi = n - 1;
 
     // Find prime factors of phi and store in a set
-    std::set<std::uint64_t> s = primitiveFactors(n);
+    std::set<T> s = primitiveFactors(n);
 
-    std::uint64_t result = 2;
+    T result = 2;
 
     for (; result < n; ++result) {
         bool valid = true;
         for (auto it = s.begin(); it != s.end() && valid; ++it) {
-            std::uint64_t exp = phi / (*it);
+            T exp = phi / (*it);
             valid &= modexp(result, exp, n) != one;
         }
 
@@ -196,7 +199,7 @@ T gcdex(T a, T b, T &x, T &y)
         return b;
     }
     T x1, y1;
-    T d = gcdex(b % a, a, x1, y1);
+    T d = gcdex<T>(b % a, a, x1, y1);
     x   = y1 - (b / a) * x1;
     y   = x1;
     return d;
@@ -211,5 +214,4 @@ T invmod(T a, T m)
     x = (x % m + m) % m;
     return x;
 }
-} // namespace crypt
-} // namespace mech
+} // namespace cml

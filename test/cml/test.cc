@@ -8,6 +8,7 @@
 #include "AlgorithmsTest.hh"
 #include "DiffieHellmanTest.hh"
 #include "RsaTest.hh"
+#include "Srp6Test.hh"
 
 int main(int argc, char *argv[])
 {

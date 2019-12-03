@@ -2,18 +2,25 @@
 
 #include <random>
 
+#include <boost/random.hpp>
+#include <boost/random/random_device.hpp>
+
+#include "ContainerByBitness.hh"
 #include "RandomGenerator.hh"
 
-namespace mech {
-namespace crypt {
-class Mt19937RandomGenerator : public RandomGenerator {
+namespace cml {
+
+template <std::uint32_t numberBitness, typename ResultType = typename ContainerByBitness<numberBitness>::Type>
+class Mt19937RandomGenerator : public RandomGenerator<ResultType> {
 public:
-    using Base   = RandomGenerator;
-    using Engine = std::mt19937;
-    using Base::Result;
+    static constexpr std::uint32_t bitness = numberBitness;
+
+    using Base = RandomGenerator<ResultType>;
+    using typename Base::Result;
+    using Engine = boost::random::independent_bits_engine<std::mt19937, bitness, Result>;
 
     Mt19937RandomGenerator() = default;
-    explicit Mt19937RandomGenerator(const Engine::result_type& seed) : m_randomEngine(seed) {}
+    explicit Mt19937RandomGenerator(const typename Engine::result_type& seed) : m_randomEngine(seed) {}
 
     Result random() override
     {
@@ -22,12 +29,12 @@ public:
 
     Result random(Result min, Result max) override
     {
-        std::uniform_int_distribution<Result> uid{min, max};
+        boost::random::uniform_int_distribution<Result> uid{ min, max };
         return uid(m_randomEngine);
     }
 
 private:
-    Engine m_randomEngine{ std::random_device{}() };
+    Engine m_randomEngine{ boost::random::random_device{}() };
 };
-} // namespace crypt
-} // namespace mech
+
+} // namespace cml

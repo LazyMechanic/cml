@@ -4,7 +4,7 @@
 
 #include <cml/cml.hh>
 
-using namespace mech::crypt;
+using namespace cml;
 
 TEST(Algorithms, modexp)
 {
@@ -584,13 +584,14 @@ TEST(Algorithms, gcd)
 
 TEST(Algorithms, primitiveRootModulo)
 {
-    EXPECT_EQ(primitiveRootModulo(2), 1);
-    EXPECT_EQ(primitiveRootModulo(3), 2);
-    EXPECT_EQ(primitiveRootModulo(4), 0);
-    EXPECT_EQ(primitiveRootModulo(5), 2);
-    EXPECT_EQ(primitiveRootModulo(6), 0);
-    EXPECT_EQ(primitiveRootModulo(7), 3);
-    EXPECT_EQ(primitiveRootModulo(9), 0);
-    EXPECT_EQ(primitiveRootModulo(10), 0);
-    EXPECT_EQ(primitiveRootModulo(11), 2);
+    Mt19937RandomGenerator<64> rnd;
+    EXPECT_EQ(primitiveRootModulo(2, rnd), 1);
+    EXPECT_EQ(primitiveRootModulo(3, rnd), 2);
+    EXPECT_EQ(primitiveRootModulo(4, rnd), 0);
+    EXPECT_EQ(primitiveRootModulo(5, rnd), 2);
+    EXPECT_EQ(primitiveRootModulo(6, rnd), 0);
+    EXPECT_EQ(primitiveRootModulo(7, rnd), 3);
+    EXPECT_EQ(primitiveRootModulo(9, rnd), 0);
+    EXPECT_EQ(primitiveRootModulo(10, rnd), 0);
+    EXPECT_EQ(primitiveRootModulo(11, rnd), 2);
 }
