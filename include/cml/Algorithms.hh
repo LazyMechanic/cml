@@ -1,9 +1,12 @@
 #pragma once
 
 #include <set>
+#include <type_traits>
 
 #include <boost/multiprecision/cpp_int.hpp>
 
+#include "IsRandomGenerator.hh"
+#include "LaunchPolicy.hh"
 #include "Mt19937RandomGenerator.hh"
 
 namespace cml {
@@ -18,6 +21,57 @@ struct IsPowerOf2 {
     static constexpr bool value  = (number != 0) && ((number & (number - 1)) == 0);
 };
 
+namespace detail {
+
+template <typename T>
+struct ExtendedContainer {
+    using Type = std::conditional_t<
+        std::is_same<T, std::uint8_t>::value,
+        std::uint16_t,
+        std::conditional_t<
+            std::is_same<T, std::uint16_t>::value,
+            std::uint32_t,
+            std::conditional_t<
+                std::is_same<T, std::uint32_t>::value,
+                std::uint64_t,
+                std::conditional_t<
+                    std::is_same<T, std::uint64_t>::value,
+                    boost::multiprecision::uint128_t,
+                    std::conditional_t<
+                        std::is_same<T, boost::multiprecision::uint128_t>::value,
+                        boost::multiprecision::uint256_t,
+                        std::conditional_t<
+                            std::is_same<T, boost::multiprecision::uint256_t>::value,
+                            boost::multiprecision::uint512_t,
+                            std::conditional_t<
+                                std::is_same<T, boost::multiprecision::uint512_t>::value,
+                                boost::multiprecision::uint1024_t,
+                                std::conditional_t<
+                                    std::is_same<T, std::int8_t>::value,
+                                    std::int16_t,
+                                    std::conditional_t<
+                                        std::is_same<T, std::int16_t>::value,
+                                        std::int32_t,
+                                        std::conditional_t<
+                                            std::is_same<T, std::int32_t>::value,
+                                            std::int64_t,
+                                            std::conditional_t<
+                                                std::is_same<T, std::int64_t>::value,
+                                                boost::multiprecision::int128_t,
+                                                std::conditional_t<
+                                                    std::is_same<T, boost::multiprecision::int128_t>::value,
+                                                    boost::multiprecision::int256_t,
+                                                    std::conditional_t<
+                                                        std::is_same<T, boost::multiprecision::int256_t>::value,
+                                                        boost::multiprecision::int512_t,
+                                                        std::conditional_t<
+                                                            std::is_same<T, boost::multiprecision::int512_t>::value,
+                                                            boost::multiprecision::int1024_t,
+                                                            boost::multiprecision::cpp_int>>>>>>>>>>>>>>;
+};
+
+} // namespace detail
+
 template <typename T>
 T modexp(T base, T exp, T modulus)
 {
@@ -26,8 +80,8 @@ T modexp(T base, T exp, T modulus)
     if (modulus == 1)
         return 0;
 
-    cpp_int newBase{ base % modulus };
-    cpp_int result = 1;
+    auto newBase = static_cast<typename detail::ExtendedContainer<T>::Type>(base % modulus);
+    auto result  = static_cast<typename detail::ExtendedContainer<T>::Type>(1);
 
     while (exp > 0) {
         if ((exp % 2) == 1)
@@ -49,8 +103,15 @@ T gcd(T a, T b)
 }
 
 template <typename T, class RandomGenerator>
-bool millerRabinTest(T number, std::uint32_t k, RandomGenerator &randomGenerator)
+bool millerRabinTest(T number,
+                     std::uint32_t k,
+                     RandomGenerator &randomGenerator,
+                     LaunchPolicy policy = LaunchPolicy::Sync)
 {
+    static_assert(IsRandomGenerator<RandomGenerator>::value,
+                  "Invalid template argument for cml:millerRabinTest(...): RandomGenerator interface is "
+                  "not suitable");
+
     // If n == 2 or n == 3 - number is prime
     if (number == 2 || number == 3)
         return true;
@@ -138,11 +199,12 @@ std::set<T> primitiveFactors(T number)
  * \brief Function to find smallest primitive root of n
  * \tparam T Return type
  * \param randomGenerator
- * \param p Modulus
- * \return Primitive root if has, 0 if \a p is primitive or if no roots
+ * \param policy Launch policy - need block random generator by mutex or not
+ * \param n Modulus
+ * \return Primitive root if has, 0 if \a n is primitive or if no roots
  */
 template <typename T, class RandomGenerator>
-T primitiveRootModulo(T n, RandomGenerator &randomGenerator)
+T primitiveRootModulo(T n, RandomGenerator &randomGenerator, LaunchPolicy policy = LaunchPolicy::Sync)
 {
     T testable                = n;
     std::uint32_t repeatCount = 0;
@@ -154,7 +216,7 @@ T primitiveRootModulo(T n, RandomGenerator &randomGenerator)
 
     // Check if n is prime or not
 
-    if (!millerRabinTest<T, RandomGenerator>(n, repeatCount, randomGenerator))
+    if (!millerRabinTest<T, RandomGenerator>(n, repeatCount, randomGenerator, policy))
         return 0;
 
     T one = 1;

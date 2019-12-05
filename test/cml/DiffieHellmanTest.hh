@@ -40,6 +40,8 @@ void testDiffieHellman(bool print = false)
 
         std::cout << "Alice received: " << aliceReceived << std::endl;
         std::cout << "Bob received:   " << bobReceived << std::endl;
+
+        std::cout << "=============================================" << std::endl;
     }
 
     EXPECT_EQ(aliceReceived, bobReceived);
@@ -81,20 +83,47 @@ TEST(DiffieHellmanProtocol, InWork_50_x100)
     }
 }
 
-TEST(DiffieHellmanProtocol, InWork_60_x100)
+TEST(DiffieHellmanProtocol, InWork_60_x50)
 {
     constexpr std::uint32_t bitness = 60;
 
-    for (std::size_t i = 0; i < 100; ++i) {
+    for (std::size_t i = 0; i < 50; ++i) {
         testDiffieHellman<bitness>(false);
     }
 }
 
-TEST(DiffieHellmanProtocol, InWork_64_x100)
+TEST(DiffieHellmanProtocol, InWork_61_x50)
+{
+    constexpr std::uint32_t bitness = 61;
+
+    for (std::size_t i = 0; i < 50; ++i) {
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_62_x50)
+{
+    constexpr std::uint32_t bitness = 62;
+
+    for (std::size_t i = 0; i < 50; ++i) {
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_63_x50)
+{
+    constexpr std::uint32_t bitness = 63;
+
+    for (std::size_t i = 0; i < 50; ++i) {
+        testDiffieHellman<bitness>(false);
+    }
+}
+
+TEST(DiffieHellmanProtocol, InWork_64_x50)
 {
     constexpr std::uint32_t bitness = 64;
 
-    for (std::size_t i = 0; i < 100; ++i) {
+    for (std::size_t i = 0; i < 50; ++i) {
         testDiffieHellman<bitness>(false);
     }
 }

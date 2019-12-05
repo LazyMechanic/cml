@@ -1,5 +1,9 @@
 #pragma once
 
+#include <future>
+#include <shared_mutex>
+#include <thread>
+
 #include "IsPrimeGenerator.hh"
 #include "IsRandomGenerator.hh"
 
@@ -32,11 +36,11 @@ DiffieHellmanSecurityBase<ValueType> DiffieHellmanSecurityBase<ValueType>::creat
                   "Invalid template argument for cml::DiffieHellmanSecurityBase::create(...): RandomGeneratorType "
                   "interface is not suitable");
 
-    DiffieHellmanSecurityBase securityBase{};
-    securityBase.p = static_cast<Value>(primeGenerator());
-    securityBase.g = primitiveRootModulo(securityBase.p, randomGenerator);
+     DiffieHellmanSecurityBase securityBase{};
+     securityBase.p = static_cast<Value>(primeGenerator(LaunchPolicy::Async));
+     securityBase.g = primitiveRootModulo(securityBase.p, randomGenerator, LaunchPolicy::Async);
 
-    return securityBase;
+     return securityBase;
 }
 
 template <typename ValueType>

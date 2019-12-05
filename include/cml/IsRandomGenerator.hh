@@ -1,6 +1,8 @@
 #pragma once
 #include <type_traits>
 
+#include "LaunchPolicy.hh"
+
 namespace cml {
 
 template <typename T>

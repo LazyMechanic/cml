@@ -99,27 +99,18 @@ TEST(RsaProtocol, InWork_128_x100)
     }
 }
 
-TEST(RsaProtocol, InWork_256_x100)
+TEST(RsaProtocol, InWork_256_x10)
 {
     constexpr std::uint32_t bitness = 256;
-
-    for (std::size_t i = 0; i < 100; ++i) {
-        testRsa<bitness>(false);
-    }
-}
-
-TEST(RsaProtocol, InWork_512_x10)
-{
-    constexpr std::uint32_t bitness = 512;
 
     for (std::size_t i = 0; i < 10; ++i) {
         testRsa<bitness>(false);
     }
 }
 
-TEST(RsaProtocol, InWork_1024_x5)
+TEST(RsaProtocol, InWork_512_x5)
 {
-    constexpr std::uint32_t bitness = 1024;
+    constexpr std::uint32_t bitness = 512;
 
     for (std::size_t i = 0; i < 5; ++i) {
         testRsa<bitness>(false);
