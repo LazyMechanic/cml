@@ -13,10 +13,13 @@
 # Description
 CML - Crypto Math Library
 
+Student lab. Don't take it seriously.
+
 # Dependencies
 - [Boost](https://www.boost.org/)
   - Boost.Multiprecision
   - Boost.Random
+- [PicoSHA256](https://github.com/okdshin/PicoSHA2) (Build-in cml)
 
 # Build & install
 ## Getting sources

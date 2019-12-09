@@ -7,13 +7,14 @@
 
 #include "ContainerByBitness.hh"
 #include "RandomGenerator.hh"
+#include "Typedefs.hh"
 
 namespace cml {
 
-template <std::uint32_t numberBitness, typename ResultType = typename ContainerByBitness<numberBitness>::Type>
+template <Uint32 numberBitness, typename ResultType = typename ContainerByBitness<numberBitness>::Type>
 class Mt19937RandomGenerator : public RandomGenerator<ResultType> {
 public:
-    static constexpr std::uint32_t bitness = numberBitness;
+    static constexpr Uint32 bitness = numberBitness;
 
     using Base = RandomGenerator<ResultType>;
     using typename Base::Result;

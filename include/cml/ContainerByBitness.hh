@@ -1,9 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <type_traits>
 
-#include <boost/multiprecision/cpp_int.hpp>
+#include "Typedefs.hh"
 
 namespace cml {
 
@@ -13,50 +12,47 @@ struct ContainerByBitness {
         sign,
         std::conditional_t<
             bitness <= 8,
-            std::int8_t,
+            Int8,
             std::conditional_t<
                 bitness <= 16,
-                std::int16_t,
+                Int16,
                 std::conditional_t<
                     bitness <= 32,
-                    std::int32_t,
+                    Int32,
                     std::conditional_t<
                         bitness <= 64,
-                        std::int64_t,
+                        Int64,
                         std::conditional_t<
                             bitness <= 128,
-                            boost::multiprecision::int128_t,
+                            Int128,
                             std::conditional_t<
                                 bitness <= 256,
-                                boost::multiprecision::int256_t,
+                                Int256,
                                 std::conditional_t<bitness <= 512,
-                                                   boost::multiprecision::int512_t,
-                                                   std::conditional_t<bitness <= 1024,
-                                                                      boost::multiprecision::int1024_t,
-                                                                      boost::multiprecision::cpp_int>>>>>>>>,
+                                                   Int512,
+                                                   std::conditional_t<bitness <= 1024, Int1014, UnboundedInt>>>>>>>>,
         std::conditional_t<
             bitness <= 8,
-            std::uint8_t,
+            Uint8,
             std::conditional_t<
                 bitness <= 16,
-                std::uint16_t,
+                Uint16,
                 std::conditional_t<
                     bitness <= 32,
-                    std::uint32_t,
+                    Uint32,
                     std::conditional_t<
                         bitness <= 64,
-                        std::uint64_t,
+                        Uint64,
                         std::conditional_t<
                             bitness <= 128,
-                            boost::multiprecision::uint128_t,
+                            Uint128,
                             std::conditional_t<
                                 bitness <= 256,
-                                boost::multiprecision::uint256_t,
-                                std::conditional_t<bitness <= 512,
-                                                   boost::multiprecision::uint512_t,
-                                                   std::conditional_t<bitness <= 1024,
-                                                                      boost::multiprecision::uint1024_t,
-                                                                      boost::multiprecision::cpp_int>>>>>>>>>;
+                                Uint256,
+                                std::conditional_t<
+                                    bitness <= 512,
+                                    Uint512,
+                                    std::conditional_t<bitness <= 1024, Uint1024, UnboundedInt>>>>>>>>>;
 };
 
 } // namespace cml

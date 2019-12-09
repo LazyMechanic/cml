@@ -4,17 +4,18 @@
 
 #include "Algorithms.hh"
 #include "IsPrimeGenerator.hh"
+#include "Typedefs.hh"
 
 namespace cml {
 
 struct RsaPublicKey {
-    boost::multiprecision::cpp_int e{ 0 };
-    boost::multiprecision::cpp_int n{ 0 };
+    UnboundedInt e{ 0 };
+    UnboundedInt n{ 0 };
 };
 
 struct RsaPrivateKey {
-    boost::multiprecision::cpp_int d{ 0 };
-    boost::multiprecision::cpp_int n{ 0 };
+    UnboundedInt d{ 0 };
+    UnboundedInt n{ 0 };
 };
 
 template <typename PrimeGeneratorType>
@@ -32,12 +33,11 @@ struct RsaProtocol {
 
     void generate();
 
-    boost::multiprecision::cpp_int encrypt(const std::uint64_t& source, const PublicKey& anotherPublicKey);
-    std::vector<boost::multiprecision::cpp_int> encrypt(const std::vector<std::uint64_t>& source,
-                                                        const PublicKey& anotherPublicKey);
+    UnboundedInt encrypt(const Uint64& source, const PublicKey& anotherPublicKey);
+    std::vector<UnboundedInt> encrypt(const std::vector<Uint64>& source, const PublicKey& anotherPublicKey);
 
-    std::uint64_t decrypt(const boost::multiprecision::cpp_int& source);
-    std::vector<std::uint64_t> decrypt(const std::vector<boost::multiprecision::cpp_int>& source);
+    Uint64 decrypt(const UnboundedInt& source);
+    std::vector<Uint64> decrypt(const std::vector<UnboundedInt>& source);
 
     PublicKey publicKey{};
     PrivateKey privateKey{};
@@ -54,16 +54,16 @@ RsaProtocol<PrimeGeneratorType>::RsaProtocol(const PrimeGenerator& primeGenerato
 template <typename PrimeGeneratorType>
 void RsaProtocol<PrimeGeneratorType>::generate()
 {
-    boost::multiprecision::cpp_int p{ primeGenerator() };
-    boost::multiprecision::cpp_int q{ primeGenerator() };
+    UnboundedInt p{ primeGenerator() };
+    UnboundedInt q{ primeGenerator() };
 
     // Compute phi
-    boost::multiprecision::cpp_int phi = (p - 1) * (q - 1);
+    UnboundedInt phi = (p - 1) * (q - 1);
 
     // Compute 'n'
-    boost::multiprecision::cpp_int n = p * q;
-    publicKey.n                      = n;
-    privateKey.n                     = n;
+    UnboundedInt n = p * q;
+    publicKey.n    = n;
+    privateKey.n   = n;
 
     // Mersenne prime number
     publicKey.e = 65537;
@@ -73,19 +73,16 @@ void RsaProtocol<PrimeGeneratorType>::generate()
 }
 
 template <typename PrimeGeneratorType>
-boost::multiprecision::cpp_int RsaProtocol<PrimeGeneratorType>::encrypt(const std::uint64_t& source,
-                                                                        const PublicKey& anotherPublicKey)
+UnboundedInt RsaProtocol<PrimeGeneratorType>::encrypt(const Uint64& source, const PublicKey& anotherPublicKey)
 {
-    return modexp<boost::multiprecision::cpp_int>(
-        boost::multiprecision::cpp_int{ source }, anotherPublicKey.e, anotherPublicKey.n);
+    return modexp<UnboundedInt>(UnboundedInt{ source }, anotherPublicKey.e, anotherPublicKey.n);
 }
 
 template <typename PrimeGeneratorType>
-std::vector<boost::multiprecision::cpp_int>
-    RsaProtocol<PrimeGeneratorType>::encrypt(const std::vector<std::uint64_t>& source,
-                                             const PublicKey& anotherPublicKey)
+std::vector<UnboundedInt> RsaProtocol<PrimeGeneratorType>::encrypt(const std::vector<Uint64>& source,
+                                                                   const PublicKey& anotherPublicKey)
 {
-    std::vector<boost::multiprecision::cpp_int> result{};
+    std::vector<UnboundedInt> result{};
     result.resize(source.size());
 
     for (std::size_t i = 0; i < source.size(); ++i) {
@@ -96,16 +93,15 @@ std::vector<boost::multiprecision::cpp_int>
 }
 
 template <typename PrimeGeneratorType>
-std::uint64_t RsaProtocol<PrimeGeneratorType>::decrypt(const boost::multiprecision::cpp_int& source)
+Uint64 RsaProtocol<PrimeGeneratorType>::decrypt(const UnboundedInt& source)
 {
-    return static_cast<std::uint64_t>(modexp<boost::multiprecision::cpp_int>(source, privateKey.d, privateKey.n));
+    return static_cast<Uint64>(modexp<UnboundedInt>(source, privateKey.d, privateKey.n));
 }
 
 template <typename PrimeGeneratorType>
-std::vector<std::uint64_t>
-    RsaProtocol<PrimeGeneratorType>::decrypt(const std::vector<boost::multiprecision::cpp_int>& source)
+std::vector<Uint64> RsaProtocol<PrimeGeneratorType>::decrypt(const std::vector<UnboundedInt>& source)
 {
-    std::vector<std::uint64_t> result{};
+    std::vector<Uint64> result{};
     result.resize(source.size());
 
     for (std::size_t i = 0; i < source.size(); ++i) {

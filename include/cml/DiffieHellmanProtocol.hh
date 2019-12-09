@@ -1,8 +1,6 @@
 #pragma once
 
 #include <future>
-#include <shared_mutex>
-#include <thread>
 
 #include "IsPrimeGenerator.hh"
 #include "IsRandomGenerator.hh"
@@ -18,7 +16,7 @@ struct DiffieHellmanSecurityBase {
     using Value = ValueType;
 
     template <class PrimeGeneratorType, class RandomGeneratorType>
-    static DiffieHellmanSecurityBase create(PrimeGeneratorType& primeGenerator, RandomGeneratorType& randomGenerator);
+    static DiffieHellmanSecurityBase<ValueType> create(PrimeGeneratorType& primeGenerator, RandomGeneratorType& randomGenerator);
 
     Value g{ 0 };
     Value p{ 0 };
@@ -32,15 +30,12 @@ DiffieHellmanSecurityBase<ValueType> DiffieHellmanSecurityBase<ValueType>::creat
     static_assert(IsPrimeGenerator<PrimeGeneratorType>::value,
                   "Invalid template argument for cml::DiffieHellmanSecurityBase: PrimeGeneratorType "
                   "interface is not suitable");
-    static_assert(IsRandomGenerator<RandomGeneratorType>::value,
-                  "Invalid template argument for cml::DiffieHellmanSecurityBase::create(...): RandomGeneratorType "
-                  "interface is not suitable");
 
-     DiffieHellmanSecurityBase securityBase{};
-     securityBase.p = static_cast<Value>(primeGenerator(LaunchPolicy::Async));
-     securityBase.g = primitiveRootModulo(securityBase.p, randomGenerator, LaunchPolicy::Async);
+    DiffieHellmanSecurityBase securityBase{};
+    securityBase.p = static_cast<Value>(primeGenerator());
+    securityBase.g = static_cast<Value>(primitiveRootModulo(securityBase.p, randomGenerator));
 
-     return securityBase;
+    return securityBase;
 }
 
 template <typename ValueType>
@@ -74,7 +69,7 @@ struct DiffieHellmanProtocol {
     DiffieHellmanProtocol();
     explicit DiffieHellmanProtocol(const RandomGenerator& randomGenerator);
 
-    void generate(SecurityBase securityBase);
+    void generate(const SecurityBase& securityBase);
 
     PublicKey publicKey{};
     PrivateKey privateKey{};
@@ -91,7 +86,7 @@ DiffieHellmanProtocol<ValueType, RandomGeneratorType>::DiffieHellmanProtocol(con
 {}
 
 template <typename ValueType, class RandomGeneratorType>
-void DiffieHellmanProtocol<ValueType, RandomGeneratorType>::generate(SecurityBase securityBase)
+void DiffieHellmanProtocol<ValueType, RandomGeneratorType>::generate(const SecurityBase& securityBase)
 {
     if (securityBase.g == 0 || securityBase.p == 0)
         throw std::logic_error{ "Security base is not generated" };

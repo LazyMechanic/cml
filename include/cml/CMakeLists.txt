@@ -13,6 +13,7 @@ set(${SUBPROJ_NAME}_PATCH_VERSION         0)
 set(${SUBPROJ_NAME}_HEADERS
     "cml.hh"
     "LaunchPolicy.hh"
+    "Typedefs.hh"
     "Algorithms.hh"
     "ContainerByBitness.hh"
     "PrimeGenerator.hh"
@@ -20,10 +21,12 @@ set(${SUBPROJ_NAME}_HEADERS
     "IsPrimeGenerator.hh"
     "IsRandomGenerator.hh"
     "MilRabPrimeGenerator.hh"
+    "MilRabSafePrimeGenerator.hh"
     "Mt19937RandomGenerator.hh"
     "DiffieHellmanProtocol.hh"
     "RsaProtocol.hh"
-    "Srp6Protocol.hh")
+    "Srp6Protocol.hh"
+    "picosha2.h")
 
 # ############################################################### #
 # Options ####################################################### #

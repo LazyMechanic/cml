@@ -1,13 +1,15 @@
 #pragma once
 
+#include <algorithm>
 #include <set>
+#include <string>
 #include <type_traits>
 
-#include <boost/multiprecision/cpp_int.hpp>
-
+#include "ExtendedContainer.hh"
 #include "IsRandomGenerator.hh"
 #include "LaunchPolicy.hh"
 #include "Mt19937RandomGenerator.hh"
+#include "Typedefs.hh"
 
 namespace cml {
 
@@ -21,57 +23,6 @@ struct IsPowerOf2 {
     static constexpr bool value  = (number != 0) && ((number & (number - 1)) == 0);
 };
 
-namespace detail {
-
-template <typename T>
-struct ExtendedContainer {
-    using Type = std::conditional_t<
-        std::is_same<T, std::uint8_t>::value,
-        std::uint16_t,
-        std::conditional_t<
-            std::is_same<T, std::uint16_t>::value,
-            std::uint32_t,
-            std::conditional_t<
-                std::is_same<T, std::uint32_t>::value,
-                std::uint64_t,
-                std::conditional_t<
-                    std::is_same<T, std::uint64_t>::value,
-                    boost::multiprecision::uint128_t,
-                    std::conditional_t<
-                        std::is_same<T, boost::multiprecision::uint128_t>::value,
-                        boost::multiprecision::uint256_t,
-                        std::conditional_t<
-                            std::is_same<T, boost::multiprecision::uint256_t>::value,
-                            boost::multiprecision::uint512_t,
-                            std::conditional_t<
-                                std::is_same<T, boost::multiprecision::uint512_t>::value,
-                                boost::multiprecision::uint1024_t,
-                                std::conditional_t<
-                                    std::is_same<T, std::int8_t>::value,
-                                    std::int16_t,
-                                    std::conditional_t<
-                                        std::is_same<T, std::int16_t>::value,
-                                        std::int32_t,
-                                        std::conditional_t<
-                                            std::is_same<T, std::int32_t>::value,
-                                            std::int64_t,
-                                            std::conditional_t<
-                                                std::is_same<T, std::int64_t>::value,
-                                                boost::multiprecision::int128_t,
-                                                std::conditional_t<
-                                                    std::is_same<T, boost::multiprecision::int128_t>::value,
-                                                    boost::multiprecision::int256_t,
-                                                    std::conditional_t<
-                                                        std::is_same<T, boost::multiprecision::int256_t>::value,
-                                                        boost::multiprecision::int512_t,
-                                                        std::conditional_t<
-                                                            std::is_same<T, boost::multiprecision::int512_t>::value,
-                                                            boost::multiprecision::int1024_t,
-                                                            boost::multiprecision::cpp_int>>>>>>>>>>>>>>;
-};
-
-} // namespace detail
-
 template <typename T>
 T modexp(T base, T exp, T modulus)
 {
@@ -80,8 +31,8 @@ T modexp(T base, T exp, T modulus)
     if (modulus == 1)
         return 0;
 
-    auto newBase = static_cast<typename detail::ExtendedContainer<T>::Type>(base % modulus);
-    auto result  = static_cast<typename detail::ExtendedContainer<T>::Type>(1);
+    auto newBase = static_cast<typename ExtendedContainer<T>::Type>(base % modulus);
+    auto result  = static_cast<typename ExtendedContainer<T>::Type>(1);
 
     while (exp > 0) {
         if ((exp % 2) == 1)
@@ -103,10 +54,7 @@ T gcd(T a, T b)
 }
 
 template <typename T, class RandomGenerator>
-bool millerRabinTest(T number,
-                     std::uint32_t k,
-                     RandomGenerator &randomGenerator,
-                     LaunchPolicy policy = LaunchPolicy::Sync)
+bool millerRabinTest(T number, Uint32 k, RandomGenerator &randomGenerator, LaunchPolicy policy = LaunchPolicy::Sync)
 {
     static_assert(IsRandomGenerator<RandomGenerator>::value,
                   "Invalid template argument for cml:millerRabinTest(...): RandomGenerator interface is "
@@ -121,15 +69,15 @@ bool millerRabinTest(T number,
         return false;
 
     // Imagine n - 1 as (2^b)*m, where m is odd
-    T m             = number - 1;
-    std::uint32_t b = 0;
+    T m      = number - 1;
+    Uint32 b = 0;
 
     while (m % 2 == 0) {
         m /= 2;
         ++b;
     }
 
-    for (std::uint32_t i = 0; i < k; i++) {
+    for (Uint32 i = 0; i < k; i++) {
         // Random integer [2, number - 2]
 
         T a = static_cast<T>(randomGenerator(2, number - 2));
@@ -141,7 +89,7 @@ bool millerRabinTest(T number,
         if (x == 1 || x == number - 1)
             continue;
 
-        for (std::uint32_t r = 1; r < b; r++) {
+        for (Uint32 r = 1; r < b; r++) {
             // x = x^2 mod number
             x = modexp<T>(x, 2ull, number);
 
@@ -276,4 +224,81 @@ T invmod(T a, T m)
     x = (x % m + m) % m;
     return x;
 }
+
+template <typename T>
+UnboundedInt binpow(T number, T power)
+{
+    UnboundedInt res = 1;
+    UnboundedInt a   = number;
+    while (power != 0) {
+        if ((power & 1) == 1)
+            res *= a;
+        a *= a;
+        power >>= 1;
+    }
+    return res;
+}
+
+template <class RandomGeneratorType>
+std::string
+    randomString(std::size_t length,
+                 RandomGeneratorType &randomGenerator,
+                 const std::string &dictionary = { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" })
+{
+    static_assert(IsRandomGenerator<RandomGeneratorType>::value,
+                  "Invalid template argument for cml::randomString(...): RandomGeneratorType "
+                  "interface is not suitable");
+
+    if (dictionary.empty()) {
+        return std::string{};
+    }
+
+    auto randchar = [&randomGenerator, dictionary]() -> char {
+        const std::size_t maxIndex = dictionary.size() - 1;
+        const std::size_t index    = static_cast<std::size_t>(randomGenerator(0, maxIndex));
+        return dictionary[index];
+    };
+
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, randchar);
+    return str;
+}
+
+/**
+ * \brief Add base prefix to number
+ * \param number String with number
+ * \param base Number base
+ * \return 0xNUMBER or 0NUMBER or 0bNUMBER or NUMBER depending on the base
+ */
+inline std::string addBasePrefix(const std::string &number, Uint32 base = 16)
+{
+    using namespace boost::multiprecision;
+
+    if (number.empty())
+        return "0";
+
+    std::string correctNumber = number;
+    switch (base) {
+        case 2:
+            if (number.size() > 1 && strncmp(number.c_str(), "0b", 2) != 0)
+                correctNumber = "0b" + number;
+            break;
+        case 8:
+            if (number.size() > 1 && number[0] != '0')
+                correctNumber = "0" + number;
+            break;
+        case 10:
+            /* do nothing */
+            break;
+        case 16:
+            if (number.size() > 1 && strncmp(number.c_str(), "0x", 2) != 0)
+                correctNumber = "0x" + number;
+            break;
+        default:
+            throw std::domain_error{ "cml::stringToInt(...): Invalid number base" };
+    }
+
+    return correctNumber;
+}
+
 } // namespace cml

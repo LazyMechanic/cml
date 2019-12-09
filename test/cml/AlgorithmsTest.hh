@@ -584,7 +584,7 @@ TEST(Algorithms, gcd)
 
 TEST(Algorithms, primitiveRootModulo)
 {
-    Mt19937RandomGenerator<64> rnd;
+    Mt19937RandomGenerator<64> rnd{};
     EXPECT_EQ(primitiveRootModulo(2, rnd), 1);
     EXPECT_EQ(primitiveRootModulo(3, rnd), 2);
     EXPECT_EQ(primitiveRootModulo(4, rnd), 0);

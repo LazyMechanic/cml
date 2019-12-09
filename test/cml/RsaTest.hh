@@ -22,10 +22,9 @@ std::string vectorToString(const std::vector<T>& message)
     return ss.str();
 }
 
-template <std::uint32_t bitness>
+template <uint32_t bitness>
 void testRsa(bool print = false)
 {
-
     using Value           = typename ContainerByBitness<bitness>::Type;
     using RandomGenerator = Mt19937RandomGenerator<bitness, Value>;
     using PrimeGenerator  = MilRabPrimeGenerator<bitness, RandomGenerator, Value>;
@@ -37,8 +36,8 @@ void testRsa(bool print = false)
     aliceRsaGenerator.generate();
     bobRsaGenerator.generate();
 
-    std::vector<std::uint64_t> aliceMessage{ 'A', 'l', 'i', 'c', 'e', '\0' };
-    std::vector<std::uint64_t> bobMessage{ 'B', 'o', 'b', '\0' };
+    std::vector<uint64_t> aliceMessage{ 'A', 'l', 'i', 'c', 'e', '\0' };
+    std::vector<uint64_t> bobMessage{ 'B', 'o', 'b', '\0' };
 
     auto aliceEncryptedMessage = aliceRsaGenerator.encrypt(aliceMessage, bobRsaGenerator.publicKey);
     auto bobEncryptedMessage   = bobRsaGenerator.encrypt(bobMessage, aliceRsaGenerator.publicKey);
@@ -55,64 +54,61 @@ void testRsa(bool print = false)
         std::cout << "----------------------------------------------------------------------" << std::endl;
         std::cout << "Alice received and decrypt message: " << vectorToString(aliceReceivedMessage) << std::endl;
         std::cout << "Bob received and decrypt message:   " << vectorToString(bobReceivedMessage) << std::endl;
-        std::cout << "======================================================================" << std::endl;
-        std::cout << std::endl << std::endl << std::endl;
+        std::cout
+            << "======================================================================================================="
+            << std::endl;
     }
 
     EXPECT_EQ(aliceMessage, bobReceivedMessage);
     EXPECT_EQ(bobMessage, aliceReceivedMessage);
 }
 
+TEST(RsaProtocol, InWork_64_x10_print)
+{
+    constexpr uint32_t bitness = 64;
+    bool print                 = true;
+
+    for (std::size_t i = 0; i < 10; ++i) {
+        testRsa<bitness>(print);
+    }
+}
+
 TEST(RsaProtocol, InWork_16_x100)
 {
-    constexpr std::uint32_t bitness = 16;
+    constexpr uint32_t bitness = 16;
+    bool print                 = false;
 
     for (std::size_t i = 0; i < 100; ++i) {
-        testRsa<bitness>(false);
+        testRsa<bitness>(print);
     }
 }
 
 TEST(RsaProtocol, InWork_32_x100)
 {
-    constexpr std::uint32_t bitness = 32;
+    constexpr uint32_t bitness = 32;
+    bool print                 = false;
 
     for (std::size_t i = 0; i < 100; ++i) {
-        testRsa<bitness>(false);
+        testRsa<bitness>(print);
     }
-} 
+}
 
 TEST(RsaProtocol, InWork_64_x100)
 {
-    constexpr std::uint32_t bitness = 64;
+    constexpr uint32_t bitness = 64;
+    bool print                 = false;
 
     for (std::size_t i = 0; i < 100; ++i) {
-        testRsa<bitness>(false);
+        testRsa<bitness>(print);
     }
 }
 
-TEST(RsaProtocol, InWork_128_x100)
+TEST(RsaProtocol, InWork_128_x10)
 {
-    constexpr std::uint32_t bitness = 128;
-
-    for (std::size_t i = 0; i < 100; ++i) {
-        testRsa<bitness>(false);
-    }
-}
-
-TEST(RsaProtocol, InWork_256_x10)
-{
-    constexpr std::uint32_t bitness = 256;
+    constexpr uint32_t bitness = 128;
+    bool print                 = false;
 
     for (std::size_t i = 0; i < 10; ++i) {
-        testRsa<bitness>(false);
-    }
-}
-
-TEST(RsaProtocol, InWork_512_x5)
-{
-    constexpr std::uint32_t bitness = 512;
-
-    for (std::size_t i = 0; i < 5; ++i) {
-        testRsa<bitness>(false);
+        testRsa<bitness>(print);
     }
 }
