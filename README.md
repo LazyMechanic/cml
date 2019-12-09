@@ -1,6 +1,6 @@
 - [Description](#description)
 - [Dependencies](#dependencies)
-- [Build & install](#build--install)
+- [Build &amp; install](#build-amp-install)
   - [Getting sources](#getting-sources)
   - [CMake configuration](#cmake-configuration)
   - [CMake options](#cmake-options)
@@ -16,6 +16,7 @@ CML - Crypto Math Library
 Student lab. Don't take it seriously.
 
 # Dependencies
+- [Googletest](https://github.com/google/googletest)
 - [Boost](https://www.boost.org/)
   - Boost.Multiprecision
   - Boost.Random
@@ -35,7 +36,7 @@ $ mkdir build
 $ cd build/
 ```
 
-Make bigint
+Make cml
 ```bash
 $ cmake                                 \
     -DCMAKE_BUILD_TYPE=[Debug|Release]  \
@@ -56,6 +57,9 @@ $ cmake                                \
 # Boost
 -DBoost_DIR=path/to/boost/library
 
+# Googletest
+-DGTest_DIR=path/to/googletest/library
+
 # Build library tests. OFF by default
 -Dcml_BUILD_TESTS=[OFF|ON]
 
@@ -71,13 +75,8 @@ Generate specific project, for example `Visual Studio solution` generator:
 -G "Visual Studio 16"
 ```
 
-Set specific compiler, for example `Clang`:
-```bash
--DCMAKE_CXX_COMPILER=clang++
-```
-
 ## Compiling
-To compile bigint:
+To compile (tests for example):
 ```bash
 $ cmake --build .
 ```
